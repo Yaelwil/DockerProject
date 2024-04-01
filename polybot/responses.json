@@ -1,0 +1,88 @@
+{
+    "greetings": [
+        "Hi there! Let's apply some filters!",
+        "Hello! Ready for filter time?",
+        "Let's dive into filters together!",
+        "Hi! How about we explore some cool filters?",
+        "Hello there! Filter fun awaits!",
+        "Hey! Ready to spice things up with filters?",
+        "Hiya! Let's kick off the filter adventure!",
+        "Hello! Filters on the menu today?",
+        "Greetings, explorer! Time for some filter magic!",
+        "Hey you! How about a dash of filters?",
+        "Hi there! Ready to jazz up your day with filters?",
+        "Hello, friend! Let's get creative with filters!",
+        "Heya! Filter excitement loading...",
+        "Hi! Filters are the name of the game!",
+        "Hello! Time to filter out the ordinary!",
+        "Hey you! Let's turn up the filter vibes!"
+    ],
+      "well_being": [
+        "I am good, thank you",
+        "Feeling great today!",
+        "Fantastic! How about some filters?",
+        "Doing well! Ready to explore some filter options?",
+        "Pretty good, thanks!"
+      ],
+      "thanks": [
+        "You're welcome!",
+        "No problem!",
+        "Glad I could help!",
+        "Happy to assist!"
+      ],
+      "filter": {
+        "intro": [
+          "Sure, let me tell you about filters."
+        ],
+        "options": [
+          "1. Blur",
+          "2. Contour",
+          "3. Rotate",
+          "4. Salt and pepper",
+          "5. Segment",
+          "6. Random colors."
+        ]
+      },
+      "default": [
+        "I didn't quite get that. Can you please rephrase?",
+        "I'm not sure what you mean.",
+        "Sorry, I couldn't understand.",
+        "Let's try something else."
+      ],
+      "photo_errors": {
+        "no_caption": [
+            "It seems like there's no caption accompanying this photo.",
+            "Oops! Looks like you forgot to add a caption to your photo.",
+            "I'm sorry, but I couldn't find any caption for this photo.",
+            "Seems like there's silence accompanying this image. No caption found.",
+            "No caption detected! Please provide a description for your photo.",
+            "It appears this photo is missing its caption. Could you provide one?",
+            "The picture is worth a thousand words, but a caption would be helpful!",
+            "I'm unable to interpret this image without a caption. Please add one.",
+            "I'm missing context here! No caption found with this photo.",
+            "A picture without a caption is like a story without words. Please add one!"
+        ],
+        "permissions_error": [
+            "There was an error processing your photo",
+            "Failed to apply filter",
+            "There was an issue with the photo",
+            "There was a problem with the photo",
+            "Try again, something went wrong.",
+            "Retry your action, there seems to be an issue.",
+            "Something seems wrong, please try again.",
+            "The operation was unsuccessful, please retry.",
+            "I'm unable to process your request at the moment.",
+            "There seems to be trouble with your request, please try again.",
+            "I'm unable to perform that action at the moment.",
+            "Please try again, there was an issue.",
+            "Try again later, there seems to be a problem.",
+            "You might want to make another attempt, there was an issue."
+        ]
+    },
+      "help": [
+        "This is a photo filter bot",
+        "You need to send me photo, add captions, and I will do the magic for you",
+        "Keep in mind that the photo I send you back is in grey-scale",
+        "To find out about the potential filters text me 'filter'"
+      ]
+}
