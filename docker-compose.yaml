@@ -9,7 +9,7 @@ services:
     networks:
       - mongoCluster_Primary_to_1
       - mongoCluster_Primary_to_2
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo1
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
 
   mongodb_secondary_1:
     image: mongo:${mongoDB_version}
@@ -20,6 +20,7 @@ services:
       - mongodb_primary
     networks:
       - mongoCluster_Primary_to_1
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
 
   mongodb_secondary_2:
     image: mongo:${mongoDB_version}
@@ -31,14 +32,15 @@ services:
     networks:
       - mongoCluster_Primary_to_2
     command: >
-      docker exec mongodb_primary mongo --eval "rs.initiate({
-        _id: 'myReplicaSet',
-        members: [
-          { _id: 0, host: 'mongodb_primary:27017' },
-          { _id: 1, host: 'mongodb_secondary_1:27017' },
-          { _id: 2, host: 'mongodb_secondary_2:27017' }
-        ]
-      })"
+      mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
+#      docker exec mongodb_primary mongo --eval "rs.initiate({
+#        _id: 'myReplicaSet',
+#        members: [
+#          { _id: 0, host: 'mongodb_primary:27017' },
+#          { _id: 1, host: 'mongodb_secondary_1:27017' },
+#          { _id: 2, host: 'mongodb_secondary_2:27017' }
+#        ]
+#      })"
 
 networks:
   mongoCluster_Primary_to_1:
