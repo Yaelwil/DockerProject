@@ -2,7 +2,7 @@ version: '0.0.1'  # This is a static version, not using the env variable
 
 services:
   mongodb_primary:
-    image: mongo:4.4.0
+    image: mongo:${mongoDB_version}
     container_name: mongodb_primary
     ports:
       - "27017:27017"
@@ -10,10 +10,9 @@ services:
       - mongoCluster_Primary_to_1
       - mongoCluster_Primary_to_2
     command: mongod --replSet myReplicaSet --bind_ip localhost,mongo1
-#    entrypoint: /bin/bash -c "/usr/src/app/init_mongo_replica_set.sh"
 
   mongodb_secondary_1:
-    image: mongo:4.4.0
+    image: mongo:${mongoDB_version}
     container_name: mongodb_secondary_1
     ports:
       - "27018:27017"
@@ -23,15 +22,23 @@ services:
       - mongoCluster_Primary_to_1
 
   mongodb_secondary_2:
-    image: mongo:4.4.0
+    image: mongo:${mongoDB_version}
     container_name: mongodb_secondary_2
     ports:
       - "27019:27017"
     depends_on:
-      - mongodb_primary
+      - mongodb_secondary_1
     networks:
       - mongoCluster_Primary_to_2
-
+    command: >
+      docker exec mongodb_primary mongo --eval "rs.initiate({
+        _id: 'myReplicaSet',
+        members: [
+          { _id: 0, host: 'mongodb_primary:27017' },
+          { _id: 1, host: 'mongodb_secondary_1:27017' },
+          { _id: 2, host: 'mongodb_secondary_2:27017' }
+        ]
+      })"
 
 networks:
   mongoCluster_Primary_to_1:
