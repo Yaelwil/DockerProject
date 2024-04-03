@@ -1,0 +1,42 @@
+version: '0.0.1'  # This is a static version, not using the env variable
+
+services:
+  mongodb_primary:
+    image: mongo:4.4.0
+    container_name: mongodb_primary
+    ports:
+      - "27017:27017"
+    networks:
+      - mongoCluster_Primary_to_1
+      - mongoCluster_Primary_to_2
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo1
+#    entrypoint: /bin/bash -c "/usr/src/app/init_mongo_replica_set.sh"
+
+  mongodb_secondary_1:
+    image: mongo:4.4.0
+    container_name: mongodb_secondary_1
+    ports:
+      - "27018:27017"
+    depends_on:
+      - mongodb_primary
+    networks:
+      - mongoCluster_Primary_to_1
+
+  mongodb_secondary_2:
+    image: mongo:4.4.0
+    container_name: mongodb_secondary_2
+    ports:
+      - "27019:27017"
+    depends_on:
+      - mongodb_primary
+    networks:
+      - mongoCluster_Primary_to_2
+
+
+networks:
+  mongoCluster_Primary_to_1:
+    name: Primarymongo_to_1
+    driver: bridge
+  mongoCluster_Primary_to_2:
+    name: Primarymongo_to_2
+    driver: bridge

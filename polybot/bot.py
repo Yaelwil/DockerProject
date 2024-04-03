@@ -97,6 +97,11 @@ class Bot:
 
 
 class ObjectDetectionBot(Bot):
+
+    def __init__(self, token, telegram_chat_url):
+        super().__init__(token, telegram_chat_url)
+        self.responses = load_responses()
+
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
 
