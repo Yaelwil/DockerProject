@@ -1,0 +1,92 @@
+version: '1'  # This is a static version, not using the env variable
+
+services:
+  mongodb_primary:
+    image: mongo:${mongoDB_version}
+    container_name: mongodb_primary
+    ports:
+      - "27017:27017"
+    networks:
+      - Primarymongo_to_1
+      - Primarymongo_to_2
+      - yolo to mongodb_primary
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
+
+
+  mongodb_secondary_1:
+    image: mongo:${mongoDB_version}
+    container_name: mongodb_secondary_1
+    ports:
+      - "27018:27017"
+    networks:
+      - Primarymongo_to_1
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
+
+  mongodb_secondary_2:
+    image: mongo:${mongoDB_version}
+    container_name: mongodb_secondary_2
+    ports:
+      - "27019:27017"
+    networks:
+      - Primarymongo_to_2
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
+
+  ubuntu_docker:
+    build:
+      dockerfile: Dockerfile_ubuntu
+    container_name: ubuntu_docker
+    image: ubuntu_docker:0.0.1
+
+  script-runner:
+    image: ubuntu_docker:0.0.1
+    container_name: script_runner
+    command: sh -c 'sleep 5 && /set-replica.sh && sleep 5 && docker stop script_runner'
+    volumes:
+      - ./set-replica.sh:/set-replica.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mongodb_primary
+      - mongodb_secondary_1
+      - mongodb_secondary_2
+      - ubuntu_docker
+    stdin_open: true
+    tty: true
+    networks:
+      - Primarymongo_to_1
+      - Primarymongo_to_2
+
+  yolo5_container:
+    build:
+      context: ./yolo5
+      dockerfile: Dockerfile
+    container_name: yolo5
+    image: yolo5:0.0.1
+
+  yolo5_app:
+    image: yolo5:0.0.1
+    container_name: yolo5_app
+    ports:
+      - "8443:8443"
+    volumes:
+    - $HOME/aws/credentials:$HOME/aws/credentials
+    depends_on:
+      - yolo5_container
+#      - script-runner
+    networks:
+      - yolo to mongodb_primary
+      - polybot to yolo
+
+
+networks:
+  Primarymongo_to_1:
+    name: Primarymongo_to_1
+    driver: bridge
+  Primarymongo_to_2:
+    name: Primarymongo_to_2
+    driver: bridge
+  yolo to mongodb_primary:
+    name: yolo to mongodb_primary
+    driver: bridge
+  polybot to yolo:
+    name: polybot to yolo
+    driver: bridge
