@@ -7,7 +7,7 @@ import yaml
 from loguru import logger
 import os
 
-images_bucket = os.environ['BUCKET_NAME']
+images_bucket = os.environ['yaelwil-dockerproject']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
