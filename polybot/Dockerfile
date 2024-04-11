@@ -4,8 +4,10 @@ FROM ubuntu:rolling
 WORKDIR /usr/src/app
 
 # Install Python3 and pip
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip
+RUN apt update && \
+    apt install -y python3 python3-pip
+
+
 
 # Upgrade pip
 RUN apt install --upgrade pip

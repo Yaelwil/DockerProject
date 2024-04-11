@@ -75,20 +75,21 @@ services:
       - yolo to mongodb_primary
       - polybot to yolo
 
-  polybot_container:
-    build:
-      context: ./polybot
-      dockerfile: Dockerfile
-    container_name: polybot
-    image: polybot:0.0.1
-
-  polybot_app:
-    image: polybot:0.0.1
-    container_name: polybot_app
-    depends_on:
-      - polybot_container
-    networks:
-      - polybot to yolo
+#  polybot_container:
+#    build:
+#      context: ./polybot
+#      dockerfile: Dockerfile
+#    container_name: polybot
+#    image: polybot:0.0.1
+#
+#  polybot_app:
+#    image: polybot:0.0.1
+#    container_name: polybot_app
+#    depends_on:
+#      - polybot_container
+#      - script-runner
+#    networks:
+#      - polybot to yolo
 
 networks:
   Primarymongo_to_1:

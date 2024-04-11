@@ -251,24 +251,23 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the URL of the YOLOv5 service for prediction
-            yolo5_url = "http://localhost:8081/predict"
+            yolo5_base_url = "http://localhost:8081/predict"
 
-            # Open the image file
-            with open(new_photo_path, 'rb') as file:
-                files = {'file': (os.path.basename(new_photo_path), file, 'image/jpeg')}
-                # TODO yolo needs to read the photo from s3
-                # Send HTTP request to the YOLOv5 service
-                response = requests.post(yolo5_url, files=files)
+            # URL for prediction with the new_photo_path parameter
+            yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
 
-                if response.status_code == 200:
-                    # Process the prediction results returned by the service
-                    prediction_results = response.json()
+            # Send HTTP request to the YOLOv5 service
+            response = requests.post(yolo5_url)
 
-                    processed_results = self.process_prediction_results(prediction_results)
+            if response.status_code == 200:
+                # Process the prediction results returned by the service
+                prediction_results = response.json()
 
-                    return processed_results
-                else:
-                    logger.error(f"Error: {response.status_code} - {response.text}")
+                processed_results = self.process_prediction_results(prediction_results)
+
+                return processed_results
+            else:
+                logger.error(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
             logger.error(f"Error calling YOLOv5 service: {e}")
 
