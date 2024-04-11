@@ -7,8 +7,8 @@ services:
     ports:
       - "27017:27017"
     networks:
-      - Primarymongo_to_1
-      - Primarymongo_to_2
+      - Primarymongo_to_mongodb_secondary_1
+      - Primarymongo_to_mongodb_secondary_2
       - yolo to mongodb_primary
     command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
 
@@ -19,7 +19,7 @@ services:
     ports:
       - "27018:27017"
     networks:
-      - Primarymongo_to_1
+      - Primarymongo_to_mongodb_secondary_1
     command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
 
   mongodb_secondary_2:
@@ -28,7 +28,7 @@ services:
     ports:
       - "27019:27017"
     networks:
-      - Primarymongo_to_2
+      - Primarymongo_to_mongodb_secondary_2
     command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
 
   ubuntu_docker:
@@ -52,8 +52,8 @@ services:
     stdin_open: true
     tty: true
     networks:
-      - Primarymongo_to_1
-      - Primarymongo_to_2
+      - Primarymongo_to_mongodb_secondary_1
+      - Primarymongo_to_mongodb_secondary_2
 
   yolo5_container:
     build:
@@ -71,18 +71,17 @@ services:
     - $HOME/aws/credentials:$HOME/aws/credentials
     depends_on:
       - yolo5_container
-#      - script-runner
+      - script-runner
     networks:
       - yolo to mongodb_primary
       - polybot to yolo
 
-
 networks:
   Primarymongo_to_1:
-    name: Primarymongo_to_1
+    name: Primarymongo_to_mongodb_secondary_1
     driver: bridge
   Primarymongo_to_2:
-    name: Primarymongo_to_2
+    name: Primarymongo_to_mongodb_secondary_2
     driver: bridge
   yolo to mongodb_primary:
     name: yolo to mongodb_primary

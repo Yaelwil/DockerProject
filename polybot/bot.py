@@ -346,18 +346,18 @@ class ObjectDetectionBot(Bot):
     def apply_segment_filter(self, msg):
         self.apply_filter(msg, Img.segment, 'Segment')
 
-    # def apply_random_colors_filter(self, msg):
-    #     img_path = self.download_user_photo(msg)
-    #     img_instance = Img(img_path)
-    #
-    #     # Apply the 'random colors' filter
-    #     img_instance.random_colors()
-    #
-    #     processed_img_path = img_instance.save_img()
-    #
-    #     # Send the processed image to the user
-    #     self.send_photo(msg['chat']['id'], processed_img_path)
-    #     self.send_text(msg['chat']['id'], 'Random colors filter applied successfully.')
+    def apply_random_colors_filter(self, msg):
+        img_path = self.download_user_photo(msg)
+        img_instance = Img(img_path)
+
+        # Apply the 'random colors' filter
+        img_instance.random_colors()
+
+        processed_img_path = img_instance.save_img()
+
+        # Send the processed image to the user
+        self.send_photo(msg['chat']['id'], processed_img_path)
+        self.send_text(msg['chat']['id'], 'Random colors filter applied successfully.')
 
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')

@@ -39,7 +39,8 @@
           "2. Contour",
           "3. Rotate",
           "4. Salt and pepper",
-          "5. Segment"
+          "5. Segment",
+          "6. Random colors."
         ]
       },
       "default": [
@@ -59,7 +60,7 @@
             "The picture is worth a thousand words, but a caption would be helpful!",
             "I'm unable to interpret this image without a caption. Please add one.",
             "I'm missing context here! No caption found with this photo.",
-            "A picture without a caption is like a story without words. Please add one!",
+            "A picture without a caption is like a story without words. Please add one!"
         ],
         "permissions_error": [
             "There was an error processing your photo",
@@ -78,11 +79,10 @@
             "You might want to make another attempt, there was an issue."
         ]
     },
-
       "help": [
         "This is a photo filter bot",
         "You need to send me photo, add captions, and I will do the magic for you",
-        "Keep in mind that the photo I send you back is in a grey scale",
+        "Keep in mind that the photo I send you back is in grey-scale",
         "To find out about the potential filters text me 'filter'"
       ]
 }

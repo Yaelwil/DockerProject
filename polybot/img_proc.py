@@ -4,7 +4,6 @@ import math
 import random
 
 
-
 def rgb2gray(rgb):
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
     gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
@@ -19,6 +18,7 @@ class Img:
         """
         self.path = Path(path)
         self.data = rgb2gray(imread(path)).tolist()
+        self.info = self.calculate_image_info()
 
     def save_img(self):
         """
@@ -54,8 +54,9 @@ class Img:
 
     def blur(self, blur_level=16):
 
-        height = len(self.data)
-        width = len(self.data[0])
+        image_info = self.calculate_image_info()
+        width = image_info['width']
+        height = image_info['height']
         filter_sum = blur_level ** 2
 
         result = []
@@ -73,7 +74,7 @@ class Img:
         for i, row in enumerate(self.data):
             res = []
             for j in range(1, len(row)):
-                res.append(abs(row[j-1] - row[j]))
+                res.append(abs(row[j - 1] - row[j]))
 
             self.data[i] = res
 
@@ -160,19 +161,21 @@ class Img:
         # Verify the dimensions based on the concatenation direction
         if direction == 'horizontal':
             if self_height != other_height:
-                raise RuntimeError("Image dimensions are not compatible for horizontal concatenation. Heights must be the same.")
+                raise RuntimeError(
+                    "Image dimensions are not compatible for horizontal concatenation. Heights must be the same.")
             else:
                 self.data = [row_self + row_other for row_self, row_other in zip(self.data, other_data)]
         elif direction == 'vertical':
             if self_width != other_width:
-                raise RuntimeError("Image dimensions are not compatible for vertical concatenation. Widths must be the same.")
+                raise RuntimeError(
+                    "Image dimensions are not compatible for vertical concatenation. Widths must be the same.")
             else:
                 self.data += other_data
         else:
             raise ValueError("Invalid concatenation direction. Use 'horizontal' or 'vertical'.")
 
-        # Return the concatenated Img instance
-        return self.data
+        # Return a new Img instance with the concatenated data
+        return Img(self.data)
 
     def segment(self):
         """
@@ -202,3 +205,64 @@ class Img:
 
         self.data = segmented_image
         return segmented_image
+
+    def rotate_by_degree(self, degrees):
+        """
+        Rotate the image by the specified degrees.
+
+        Args:
+            degrees (float): Rotation angle in degrees.
+
+        Returns:
+            Img: Rotated image object.
+        """
+        # 1. Import the data from the basic_calculations function
+        image_info = self.calculate_image_info()
+        width = image_info['width']
+        height = image_info['height']
+        center_x = image_info['center_x']
+        center_y = image_info['center_y']
+
+        # 2. Calculate degrees in radiants
+        radians = math.radians(degrees)
+
+        # 3. Create new variable to store the new rotated image
+        rotated_image = [[0] * width for _ in range(height)]
+
+        # 4. Iterate over each pixel in the original image
+        for y in range(height):
+            for x in range(width):
+
+                # 5. Calculate for each pixel its new location
+                new_x = int((x - center_x) * math.cos(radians) - (y - center_y) * math.sin(radians) + center_x)
+                new_y = int((x - center_x) * math.sin(radians) + (y - center_y) * math.cos(radians) + center_y)
+
+                # 6. Check if new coordinates are within bounds
+                if 0 <= new_x < width and 0 <= new_y < height:
+                    # 7. Copy the pixel value to the rotated position
+                    rotated_image[y][x] = self.data[new_y][new_x]
+
+        # 8. Set the rotated data back to the instance
+        self.data = rotated_image
+
+        # 9. Display Result (optional, you might not want to return anything)
+        return self
+
+    def random_colors(self):
+        """
+        Apply the 'random colors' filter to the image.
+        Assigns a random RGB color to each pixel.
+        """
+
+        # Calculate the image information for the current instance
+        self_info = self.calculate_image_info()
+        height = self_info['height']
+        width = self_info['width']
+
+        for i in range(height):
+            for j in range(width):
+                # Generate random RGB values
+                color = random.randint(0, 255)
+
+                # Set the pixel color
+                self.data[i][j] = color
