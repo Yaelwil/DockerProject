@@ -6,6 +6,7 @@ import uuid
 import yaml
 from loguru import logger
 import os
+import pymongo
 import boto3
 
 images_bucket = os.environ['yaelwil-dockerproject']
@@ -83,6 +84,13 @@ def predict():
         }
 
         # TODO store the prediction_summary in MongoDB
+        # Connect to MongoDB
+        client = pymongo.MongoClient("mongodb://localhost:27017/")
+        db = client["docker_project"]
+        # Select or create a collection for predictions
+        collection = db["predictions"]
+        # Insert JSON data into MongoDB
+        collection.insert_one(prediction_summary)
 
         return prediction_summary
     else:

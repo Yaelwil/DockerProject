@@ -54,31 +54,31 @@ services:
       - Primarymongo_to_1
       - Primarymongo_to_2
 
-  yolo5_container:
-    build:
-      context: ./yolo5
-      dockerfile: Dockerfile
-    container_name: yolo5
-    image: yolo5:0.0.1
-
-  yolo5_app:
-    image: yolo5:0.0.1
-    container_name: yolo5_app
-    ports:
-      - "8443:8443"
-    volumes:
-    - $HOME/aws/credentials:$HOME/aws/credentials
-    depends_on:
-      - yolo5_container
-      - script-runner
-    networks:
-      - yolo to mongodb_primary
-      - polybot to yolo
+#  yolo5_container:
+#    build:
+#      context: ./yolo5
+#      dockerfile: Dockerfile_ubuntu
+#    container_name: yolo5
+#    image: yolo5:0.0.1
+#
+#  yolo5_app:
+#    image: yolo5:0.0.1
+#    container_name: yolo5_app
+#    ports:
+#      - "8443:8443"
+#    volumes:
+#    - $HOME/aws/credentials:$HOME/aws/credentials
+#    depends_on:
+#      - yolo5_container
+#      - script-runner
+#    networks:
+#      - yolo to mongodb_primary
+#      - polybot to yolo
 
 #  polybot_container:
 #    build:
 #      context: ./polybot
-#      dockerfile: Dockerfile
+#      dockerfile: Dockerfile_ubuntu
 #    container_name: polybot
 #    image: polybot:0.0.1
 #
