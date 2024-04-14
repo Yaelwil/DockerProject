@@ -74,7 +74,7 @@ class Img:
         for i, row in enumerate(self.data):
             res = []
             for j in range(1, len(row)):
-                res.append(abs(row[j-1] - row[j]))
+                res.append(abs(row[j - 1] - row[j]))
 
             self.data[i] = res
 
@@ -161,12 +161,14 @@ class Img:
         # Verify the dimensions based on the concatenation direction
         if direction == 'horizontal':
             if self_height != other_height:
-                raise RuntimeError("Image dimensions are not compatible for horizontal concatenation. Heights must be the same.")
+                raise RuntimeError(
+                    "Image dimensions are not compatible for horizontal concatenation. Heights must be the same.")
             else:
                 self.data = [row_self + row_other for row_self, row_other in zip(self.data, other_data)]
         elif direction == 'vertical':
             if self_width != other_width:
-                raise RuntimeError("Image dimensions are not compatible for vertical concatenation. Widths must be the same.")
+                raise RuntimeError(
+                    "Image dimensions are not compatible for vertical concatenation. Widths must be the same.")
             else:
                 self.data += other_data
         else:
@@ -203,7 +205,7 @@ class Img:
 
         self.data = segmented_image
         return segmented_image
-    
+
     def rotate_by_degree(self, degrees):
         """
         Rotate the image by the specified degrees.

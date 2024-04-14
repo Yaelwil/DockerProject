@@ -4,6 +4,11 @@ import os
 import time
 from telebot.types import InputFile
 import random
+import subprocess
+import sys
+from datetime import datetime
+import boto3
+import requests
 
 #from polybot.img_proc import Img
 #from polybot.responses import load_responses
@@ -101,63 +106,218 @@ class ObjectDetectionBot(Bot):
     def __init__(self, token, telegram_chat_url):
         super().__init__(token, telegram_chat_url)
         self.responses = load_responses()
+        self.s3 = boto3.client('s3')
 
-    def handle_message(self, msg):
-        logger.info(f'Incoming message: {msg}')
+    def rename_photo_with_timestamp(self, photo_path):
+        """
+        Rename a photo with a timestamp in the format 'yyyy-mm-dd HH:MM:SS'.
+        If multiple photos are saved within the same minute, append a counter
+        to the filename.
 
-        if self.is_current_msg_photo(msg):
-            photo_path = self.download_user_photo(msg)
+        Parameters:
+            photo_path (str): The path to the photo file locally.
 
-            # TODO upload the photo to S3
-            # TODO send an HTTP request to the `yolo5` service for prediction
-            # TODO send the returned results to the Telegram end-user
+        Returns:
+            new_photo_path (str): The new path to the photo file locally.
+            new_file_name (str): The new file name locally.
+        """
 
+        try:
+            # Get current date and time
+            current_time = datetime.now()
 
-class ImageProcessingBot(Bot):
+            # Format the datetime as required
+            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    def __init__(self, token, telegram_chat_url):
-        super().__init__(token, telegram_chat_url)
-        self.responses = load_responses()
+            # Get the file extension
+            file_name, file_extension = os.path.splitext(photo_path)
 
-    def handle_message(self, msg):
-        logger.info(f'Message: {msg}')
+            # Check if there's already a photo saved in the same minute
+            same_minute_files = [f for f in os.listdir(os.path.dirname(photo_path)) if f.startswith(formatted_time)]
 
-        # Check if the message contains a photo with a caption
-        if 'photo' in msg:
-            if 'caption' in msg:
-
-                photo_caption = msg['caption'].lower()
-
-                try:
-                    # Check for specific keywords in the caption to determine the filter to apply
-                    if 'blur' in photo_caption:
-                        self.apply_blur_filter(msg)
-                    elif 'contour' in photo_caption:
-                        self.apply_contour_filter(msg)
-                    elif 'rotate' in photo_caption:
-                        self.apply_rotate_filter(msg)
-                    elif 'salt and pepper' in photo_caption:
-                        self.apply_salt_n_pepper_filter(msg)
-                    elif 'segment' in photo_caption:
-                        self.apply_segment_filter(msg)
-                    elif 'random color' in photo_caption:
-                        self.apply_random_colors_filter(msg)
-                    else:
-                        # If no specific filter is mentioned, respond with a default message
-                        default_response = random.choice(self.responses['default'])
-                        self.send_text(msg['chat']['id'], default_response)
-
-                except Exception:
-                    no_permission_response = random.choice(self.responses['photo_errors']['permissions_error'])
-                    self.send_text(msg['chat']['id'], no_permission_response)
+            # Construct the new file name
+            if same_minute_files:
+                # Append a counter to the file name
+                counter = len(same_minute_files) + 1
+                new_file_name = f"{formatted_time} p{counter}{file_extension}"
             else:
-                # If photo is sent without a caption, return a random response from the JSON file
-                no_captions_response = random.choice(self.responses['photo_errors']['no_caption'])
-                self.send_text(msg['chat']['id'], no_captions_response)
+                new_file_name = f"{formatted_time}{file_extension}"
 
-        # If the message doesn't contain a photo with a caption, handle it as a regular text message
-        else:
-            super().handle_message(msg)
+            # Rename the file
+            new_photo_path = os.path.join(os.path.dirname(photo_path), new_file_name)
+            os.rename(photo_path, new_photo_path)
+
+            return new_photo_path, new_file_name
+
+        except Exception as e:
+            logger.error(f"Error renaming photo: {e}")
+            raise
+
+    def ensure_s3_directory_exists(self, bucket, directory):
+        """
+        Makes sure that the specified directory exists in S3. If not, it creates the folder.
+
+        Parameters:
+            bucket (str): Bucket name.
+            directory (str): Directory to check.
+        """
+
+        try:
+            # Check if the directory exists by listing objects in the directory
+            self.s3.head_object(Bucket=bucket, Key=(directory + '/'))
+        except self.s3.exceptions.ClientError as e:
+            # If the directory doesn't exist, create it
+            if e.response['Error']['Code'] == '404':
+                self.s3.put_object(Bucket=bucket, Key=(directory + '/'))
+            else:
+                raise  # Raise the exception if it's not a '404 Not Found' error
+
+    def upload_photo_to_s3(self, photo_path):
+        """
+        Upload the photo to S3 bucket.
+
+        Parameters:
+            photo_path (str): The path to the photo file locally.
+
+        Returns:
+            s3_key (str): The new path to the photo file in S3.
+        """
+
+        try:
+            # Specify the directory path in the bucket
+            s3_directory_path = 'picture/'
+
+            # Ensure the directory exists in the S3 bucket
+            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
+
+            # Extract filename from the path
+            filename = os.path.basename(photo_path)
+
+            # Combine directory path and filename to form the S3 key
+            s3_key = s3_directory_path + filename
+
+            # Upload the photo to S3
+            self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)
+
+            # Return the S3 key
+            return s3_key
+        except Exception as e:
+            logger.error(f"Error uploading photo to S3: {e}")
+            return None
+
+    def process_prediction_results(self, prediction_results):
+        """
+        Process the response from YOLO to the format required in the project.
+
+        Parameters:
+            prediction_results (JSON): Prediction results from YOLOv5.
+
+        Returns:
+            processed_results (JSON): Processed prediction to the format required in the project.
+        """
+
+        try:
+            # Assuming prediction_results is a JSON object
+            # Extract relevant information
+            detections = prediction_results['detections']
+
+            # Count occurrences of each object
+            object_count = {}
+            for detection in detections:
+                label = detection['label']
+                if label in object_count:
+                    object_count[label] += 1
+                else:
+                    object_count[label] = 1
+
+            # Format the results
+            processed_results = []
+            for label, count in object_count.items():
+                processed_results.append(f"{label}: {count}")
+
+            return processed_results
+
+        except KeyError as e:
+            logger.error(f"Error parsing prediction results: {e}")
+            return None
+
+    def call_yolo_service(self, new_photo_path):
+        """
+        Sends an HTTPS request to YOLO to make a prediction of the photo.
+
+        Parameters:
+            new_photo_path (str): The new path to the photo file locally, from "rename_photo_with_timestamp" method.
+        """
+
+        try:
+            # Specify the URL of the YOLOv5 service for prediction
+            yolo5_base_url = "http://localhost:8081/predict"
+
+            # URL for prediction with the new_photo_path parameter
+            yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
+
+            # Send HTTP request to the YOLOv5 service
+            response = requests.post(yolo5_url)
+
+            if response.status_code == 200:
+                # Process the prediction results returned by the service
+                prediction_results = response.json()
+
+                processed_results = self.process_prediction_results(prediction_results)
+
+                return processed_results
+            else:
+                logger.error(f"Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            logger.error(f"Error calling YOLOv5 service: {e}")
+
+    def send_prediction_results_to_telegram(self, processed_results):
+        """
+        Sends the prediction message to the Telegram user.
+
+        Parameters:
+            processed_results (JSON): Processed prediction to the format required in the project.
+        """
+
+        try:
+            if processed_results:
+                # Convert the processed results to a list of strings
+                formatted_results = []
+                for result in processed_results:
+                    # Assuming each result is a dictionary
+                    formatted_result = f"Label: {result['label']}, Confidence: {result['confidence']}"
+                    formatted_results.append(formatted_result)
+
+                # Join the formatted results into a single string
+                processed_results_message = "Prediction results:\n" + "\n".join(formatted_results)
+
+                # Send the message to the Telegram end-user using the obtained chat ID
+                return processed_results_message
+            else:
+                logger.error("Error processing prediction results.")
+        except Exception as e:
+            logger.error(f"Error sending prediction results to Telegram: {e}")
+
+    def send_telegram_message(self, chat_id, message):
+        """
+        Sends a message to the Telegram user.
+
+        Parameters:
+            message (str): The message to be sent.
+        """
+
+        try:
+            # Send the message to the Telegram end-user using the obtained chat ID
+            telegram_api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            payload = {
+                'chat_id': chat_id,
+                'text': message
+            }
+            response = requests.post(telegram_api_url, json=payload)
+            if response.status_code != 200:
+                logger.error(f"Error sending message to Telegram: {response.text}")
+        except Exception as e:
+            logger.error(f"Error sending message to Telegram: {e}")
 
     def apply_filter(self, msg, filter_func, filter_name):
         # Download the photo and apply the specified filter
@@ -197,3 +357,89 @@ class ImageProcessingBot(Bot):
         # Send the processed image to the user
         self.send_photo(msg['chat']['id'], processed_img_path)
         self.send_text(msg['chat']['id'], 'Random colors filter applied successfully.')
+
+    def handle_message(self, msg):
+        logger.info(f'Incoming message: {msg}')
+
+        # Check if the message contains a photo with a caption
+        if 'photo' in msg:
+            if 'caption' in msg:
+                photo_caption = msg['caption'].lower()
+
+                try:
+                    # Check for specific keywords in the caption to determine the filter to apply
+                    if ('blur' in photo_caption or
+                            'contour' in photo_caption or
+                            'rotate' in photo_caption or
+                            'salt and pepper' in photo_caption or
+                            'segment' in photo_caption or
+                            'random color' in photo_caption):
+                        self.image_processing(msg)
+                    elif 'predict' in photo_caption:
+                        self.object_detection(msg)
+                    else:
+                        # If no specific filter is mentioned, respond with a default message
+                        default_response = random.choice(self.responses['default'])
+                        self.send_text(msg['chat']['id'], default_response)
+
+                except Exception:
+                    no_permission_response = random.choice(self.responses['photo_errors']['permissions_error'])
+                    self.send_text(msg['chat']['id'], no_permission_response)
+            else:
+                # If photo is sent without a caption, return a random response from the JSON file
+                no_captions_response = random.choice(self.responses['photo_errors']['no_caption'])
+                self.send_text(msg['chat']['id'], no_captions_response)
+
+                # If the message doesn't contain a photo with a caption, handle it as a regular text message
+        else:
+            super().handle_message(msg)
+
+    def image_processing(self, msg):
+        photo_caption = msg['caption'].lower()
+
+        if 'blur' in photo_caption:
+            self.apply_blur_filter(msg)
+        elif 'contour' in photo_caption:
+            self.apply_contour_filter(msg)
+        elif 'rotate' in photo_caption:
+            self.apply_rotate_filter(msg)
+        elif 'salt and pepper' in photo_caption:
+            self.apply_salt_n_pepper_filter(msg)
+        elif 'segment' in photo_caption:
+            self.apply_segment_filter(msg)
+        elif 'random color' in photo_caption:
+            self.apply_random_colors_filter(msg)
+        else:
+            pass
+
+    def object_detection(self, msg):
+        if self.is_current_msg_photo(msg):
+            photo_path = self.download_user_photo(msg)
+
+            # Rename the photo with timestamp
+            new_photo_path, new_file_name = self.rename_photo_with_timestamp(photo_path)
+
+            if new_photo_path and new_file_name:
+                # Upload the photo to S3
+                s3_key = self.upload_photo_to_s3(new_photo_path)
+
+                if s3_key:
+                    # Call the YOLOv5 service
+                    self.call_yolo_service(new_photo_path)
+
+                    # Obtain the chat ID from the incoming message
+                    chat_id = msg['chat']['id']
+
+                    # Send the prediction results to Telegram user
+                    processed_results_message = self.send_prediction_results_to_telegram(chat_id)
+
+                    # Check if the processed results message exist
+                    if processed_results_message:
+                        # Send the processed results message to the Telegram user
+                        self.send_telegram_message(chat_id, processed_results_message)
+                    else:
+                        logger.error("Error sending prediction results message.")
+                else:
+                    logger.error("Error uploading photo to S3.")
+            else:
+                logger.error("Error renaming photo.")

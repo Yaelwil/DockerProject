@@ -6,8 +6,10 @@ import uuid
 import yaml
 from loguru import logger
 import os
+import pymongo
+import boto3
 
-images_bucket = os.environ['BUCKET_NAME']
+images_bucket = os.environ['yaelwil-dockerproject']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
@@ -26,9 +28,15 @@ def predict():
     # Receives a URL parameter representing the image to download from S3
     img_name = request.args.get('imgName')
 
-    # TODO download img_name from S3, store the local image path in the original_img_path variable.
-    #  The bucket name is provided as an env var BUCKET_NAME.
-    original_img_path = ...
+    # Create an S3 client
+    s3 = boto3.client('s3')
+
+    # Define the local filename to save the downloaded file
+    file_name = img_name.split('/')[-1]
+    original_img_path = os.path.join('~/', file_name)
+
+    # Download the file
+    s3.download_file(images_bucket, img_name, original_img_path)
 
     logger.info(f'prediction: {prediction_id}/{original_img_path}. Download img completed')
 
@@ -49,8 +57,10 @@ def predict():
     # and possibly confidence scores.
     predicted_img_path = Path(f'static/data/{prediction_id}/{original_img_path}')
 
-    # TODO Uploads the predicted image (predicted_img_path) to S3 (be careful not to override the original image).
+    base_name, file_extension = os.path.splitext(original_img_path)
+    new_file_name = f"{base_name}-predict{file_extension}"
 
+    s3.upload_file(predicted_img_path, images_bucket, new_file_name)
     # Parse prediction labels and create a summary
     pred_summary_path = Path(f'static/data/{prediction_id}/labels/{original_img_path.split(".")[0]}.txt')
     if pred_summary_path.exists():
@@ -76,6 +86,13 @@ def predict():
         }
 
         # TODO store the prediction_summary in MongoDB
+        # Connect to MongoDB
+        client = pymongo.MongoClient("mongodb://localhost:27017/")
+        db = client["docker_project"]
+        # Select or create a collection for predictions
+        collection = db["predictions"]
+        # Insert JSON data into MongoDB
+        collection.insert_one(prediction_summary)
 
         return prediction_summary
     else:
