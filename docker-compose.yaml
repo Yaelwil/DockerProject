@@ -39,7 +39,7 @@ services:
   script-runner:
     image: ubuntu_docker:0.0.1
     container_name: script_runner
-    command: sh -c 'chmod +x ./set-replica.sh && sleep 5 && /set-replica.sh && sleep 5 && docker stop script_runner'
+    command: sh -c 'chmod +x ./set-replica.sh && /set-replica.sh && sleep 5 && docker stop script_runner'
     volumes:
       - ./set-replica.sh:/set-replica.sh
       - /var/run/docker.sock:/var/run/docker.sock
@@ -54,42 +54,42 @@ services:
       - Primarymongo_to_1
       - Primarymongo_to_2
 
-#  yolo5_container:
-#    build:
-#      context: ./yolo5
-#      dockerfile: Dockerfile_ubuntu
-#    container_name: yolo5
-#    image: yolo5:0.0.1
-#
-#  yolo5_app:
-#    image: yolo5:0.0.1
-#    container_name: yolo5_app
-#    ports:
-#      - "8443:8443"
-#    volumes:
-#    - $HOME/aws/credentials:$HOME/aws/credentials
-#    depends_on:
-#      - yolo5_container
-#      - script-runner
-#    networks:
-#      - yolo to mongodb_primary
-#      - polybot to yolo
+  yolo5_container:
+    build:
+      context: ./yolo5
+      dockerfile: Dockerfile
+    container_name: yolo5_container
+    image: yolo5:0.0.1
 
-#  polybot_container:
-#    build:
-#      context: ./polybot
-#      dockerfile: Dockerfile_ubuntu
-#    container_name: polybot
-#    image: polybot:0.0.1
-#
-#  polybot_app:
-#    image: polybot:0.0.1
-#    container_name: polybot_app
-#    depends_on:
-#      - polybot_container
-#      - script-runner
-#    networks:
-#      - polybot to yolo
+  yolo5_app:
+    image: yolo5:0.0.1
+    container_name: yolo5_app
+    ports:
+      - "8443:8443"
+    volumes:
+    - $HOME/aws/credentials:$HOME/aws/credentials
+    depends_on:
+      - yolo5_container
+      - script-runner
+    networks:
+      - yolo to mongodb_primary
+      - polybot to yolo
+
+  polybot_container:
+    build:
+      context: ./polybot
+      dockerfile: Dockerfile
+    container_name: polybot
+    image: polybot:0.0.1
+
+  polybot_app:
+    image: polybot:0.0.1
+    container_name: polybot_app
+    depends_on:
+      - polybot_container
+      - script-runner
+    networks:
+      - polybot to yolo
 
 networks:
   Primarymongo_to_1:

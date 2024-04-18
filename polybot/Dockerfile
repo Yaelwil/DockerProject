@@ -1,20 +1,10 @@
-FROM ubuntu:rolling
+From python:alpine3.19
 
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Install Python3 and pip
-RUN apt update && \
-    apt install -y python3 python3-pip
-
-
-
-# Upgrade pip
-RUN apt install --upgrade pip
-
 # Copy requirements.txt and install dependencies
 COPY requirements.txt .
-COPY init_mongo_replica_set.sh /docker-entrypoint-initdb.d/
 
 RUN pip install -r requirements.txt
 

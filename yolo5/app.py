@@ -9,7 +9,7 @@ import os
 import pymongo
 import boto3
 
-images_bucket = os.environ['yaelwil-dockerproject']
+images_bucket = os.environ['BUCKET_NAME']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']

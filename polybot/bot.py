@@ -307,6 +307,7 @@ class ObjectDetectionBot(Bot):
         """
 
         try:
+            # TODO get the telegram app URL from the enviournment variables
             # Send the message to the Telegram end-user using the obtained chat ID
             telegram_api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
             payload = {
