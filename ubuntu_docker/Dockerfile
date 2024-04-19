@@ -7,3 +7,8 @@ RUN apt-get update && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && \
     apt-get update && \
     apt-get install -y docker-ce docker-ce-cli containerd.io
+
+# Copy the script into the image
+COPY set-replica.sh /usr/local/bin/set-replica.sh
+# Make the script executable
+RUN chmod +x /usr/local/bin/set-replica.sh

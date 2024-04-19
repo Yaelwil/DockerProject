@@ -1,63 +1,61 @@
 version: '1'  # This is a static version, not using the env variable
 
 services:
-#  mongodb_primary:
-#    image: ${mongodb_image}
-#    container_name: ${mongo_primary_container_name}
-#    ports:
-#      - "27017:27017"
-#    networks:
-#      - mongodb_primary_to_secondary_1
-#      - mongodb_primary_to_secondary_2
-#      - mongodb_primary_to_yolo
-#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
-#
-#  mongodb_secondary_1:
-#    image: ${mongodb_image}
-#    container_name: ${mongo_secondary_1_container_name}
-#    ports:
-#      - "27018:27017"
-#    networks:
-#      - mongodb_primary_to_secondary_1
-#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
-#
-#  mongodb_secondary_2:
-#    image: ${mongodb_image}
-#    container_name: ${mongo_secondary_2_container_name}
-#    ports:
-#      - "27019:27017"
-#    networks:
-#      - mongodb_primary_to_secondary_2
-#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
-#
-#
-#  script-runner:
-#    image: ${script_runner_image}
-#    container_name: ${script_runner_container_name}
-#    command: sh -c 'sudo chmod +x ./set-replica.sh && /set-replica.sh && sleep 5 && docker stop script_runner'
-#    volumes:
-#      - ./set-replica.sh:/set-replica.sh
-#      - /var/run/docker.sock:/var/run/docker.sock
-#    depends_on:
-#      - mongodb_primary
-#      - mongodb_secondary_1
-#      - mongodb_secondary_2
-#      - ubuntu_docker
-#    stdin_open: true
-#    tty: true
-#    networks:
-#      - mongodb_primary_to_secondary_1
-#      - mongodb_primary_to_secondary_2
+  mongodb_primary:
+    image: ${mongodb_image}
+    container_name: ${mongo_primary_container_name}
+    ports:
+      - "27017:27017"
+    networks:
+      - mongodb_primary_to_secondary_1
+      - mongodb_primary_to_secondary_2
+      - mongodb_primary_to_yolo
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
+
+  mongodb_secondary_1:
+    image: ${mongodb_image}
+    container_name: ${mongo_secondary_1_container_name}
+    ports:
+      - "27018:27017"
+    networks:
+      - mongodb_primary_to_secondary_1
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
+
+  mongodb_secondary_2:
+    image: ${mongodb_image}
+    container_name: ${mongo_secondary_2_container_name}
+    ports:
+      - "27019:27017"
+    networks:
+      - mongodb_primary_to_secondary_2
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
+
+
+  script-runner:
+    image: ${ubuntu_docker}
+    container_name: ${ubuntu_container_name}
+    command: sh -c '/usr/local/bin/set-replica.sh && sleep 10 && docker stop script_runner'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mongodb_primary
+      - mongodb_secondary_1
+      - mongodb_secondary_2
+    stdin_open: true
+    tty: true
+    networks:
+      - mongodb_primary_to_secondary_1
+      - mongodb_primary_to_secondary_2
 
   yolo5_app:
     image: ${yolo5_image}
     container_name: ${yolo_container_name}
     ports:
-      - "8443:8443"
+      - "8081:8081"
     volumes:
     - $HOME/aws/credentials:$HOME/aws/credentials
-#    depends_on:
-#      - script-runner
+    depends_on:
+      - script-runner
     networks:
       - mongodb_primary_to_yolo
       - yolo_to_polybot
@@ -68,21 +66,24 @@ services:
   polybot_app:
     image: ${polybot_image}
     container_name: polybot_app
-#    depends_on:
-#      - script-runner
+    depends_on:
+      - script-runner
     networks:
       - yolo_to_polybot
+    ports:
+      - "8443:8443"
+
     env_file:
       - .env
 
 
 networks:
-#  mongodb_primary_to_secondary_1:
-#    name: ${mongodb_primary_to_secondary_1}
-#    driver: ${driver}
-#  mongodb_primary_to_secondary_2:
-#    name: ${mongodb_primary_to_secondary_2}
-#    driver: ${driver}
+  mongodb_primary_to_secondary_1:
+    name: ${mongodb_primary_to_secondary_1}
+    driver: ${driver}
+  mongodb_primary_to_secondary_2:
+    name: ${mongodb_primary_to_secondary_2}
+    driver: ${driver}
   mongodb_primary_to_yolo:
     name: ${mongodb_primary_to_yolo}
     driver: ${driver}
