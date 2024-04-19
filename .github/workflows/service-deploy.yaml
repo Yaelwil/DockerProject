@@ -90,12 +90,36 @@ jobs:
             # Get the ngrok current domain (you should assume ngrok is already running in the EC2)
             NGROK_DOMAIN=$(curl -s localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
             
-#            # Generate .env file
-#            echo """
-#            POLYBOT_IMG_NAME=polybot:${{ github.run_number }}
-#            YOLO5_IMG_NAME=yolo5:${{ github.run_number }}
-#            TELEGRAM_APP_URL=$NGROK_DOMAIN
-#            """ > .env
+            # Generate .env file
+            echo """
+            TELEGRAM_APP_URL=https://alpaca-star-early.ngrok-free.app
+            
+            # Base image
+            mongodb_image=mongo:4.4.0
+            yolo5_image=yaeli1/yolov5:0.0.1
+            polybot_image=yaeli1/polybot:0.0.1
+            ubuntu_docker=yaeli1/ubuntu_docker:0.0.2
+            
+            # container names
+            mongo_primary_container_name=mongodb_primary
+            mongo_secondary_1_container_name=mongodb_secondary_1
+            mongo_secondary_2_container_name=mongodb_secondary_2
+            yolo_container_name=yolo_app
+            polybot_container_name=polybot_app
+            ubuntu_container_name=ubuntu_docker
+            
+            # networks names
+            mongodb_primary_to_secondary_1=mongodb_primary_to_secondary_1
+            mongodb_primary_to_secondary_2=mongodb_primary_to_secondary_2
+            mongodb_primary_to_yolo=mongodb_primary_to_yolo
+            yolo_to_polybot=yolo_to_polybot
+            driver=bridge
+            
+            # AWS variables
+            BUCKET_NAME=yaelwil-dockerproject
+            TELEGRAM_BOT_TOKEN = ${{ secrets.TELEGRAM_BOT_TOKEN }}
+            
+            """ > .env
             
             # Take the service down
             docker compose down

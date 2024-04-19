@@ -40,7 +40,8 @@
           "3. Rotate",
           "4. Salt and pepper",
           "5. Segment",
-          "6. Random colors."
+          "6. Random colors.",
+          "7. Predict."
         ]
       },
       "default": [
