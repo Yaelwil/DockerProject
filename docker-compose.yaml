@@ -1,106 +1,94 @@
 version: '1'  # This is a static version, not using the env variable
 
 services:
-  mongodb_primary:
-    image: mongo:${mongoDB_version}
-    container_name: mongodb_primary
-    ports:
-      - "27017:27017"
-    networks:
-      - Primarymongo_to_1
-      - Primarymongo_to_2
-      - yolo to mongodb_primary
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
-
-  mongodb_secondary_1:
-    image: mongo:${mongoDB_version}
-    container_name: mongodb_secondary_1
-    ports:
-      - "27018:27017"
-    networks:
-      - Primarymongo_to_1
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
-
-  mongodb_secondary_2:
-    image: mongo:${mongoDB_version}
-    container_name: mongodb_secondary_2
-    ports:
-      - "27019:27017"
-    networks:
-      - Primarymongo_to_2
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
-
-  ubuntu_docker:
-    build:
-      dockerfile: Dockerfile_ubuntu
-    container_name: ubuntu_docker
-    image: ubuntu_docker:0.0.1
-
-  script-runner:
-    image: ubuntu_docker:0.0.1
-    container_name: script_runner
-    command: sh -c 'chmod +x ./set-replica.sh && /set-replica.sh && sleep 5 && docker stop script_runner'
-    volumes:
-      - ./set-replica.sh:/set-replica.sh
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - mongodb_primary
-      - mongodb_secondary_1
-      - mongodb_secondary_2
-      - ubuntu_docker
-    stdin_open: true
-    tty: true
-    networks:
-      - Primarymongo_to_1
-      - Primarymongo_to_2
-
-  yolo5_container:
-    build:
-      context: ./yolo5
-      dockerfile: Dockerfile
-    container_name: yolo5_container
-    image: yolo5:0.0.1
+#  mongodb_primary:
+#    image: ${mongodb_image}
+#    container_name: ${mongo_primary_container_name}
+#    ports:
+#      - "27017:27017"
+#    networks:
+#      - mongodb_primary_to_secondary_1
+#      - mongodb_primary_to_secondary_2
+#      - mongodb_primary_to_yolo
+#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
+#
+#  mongodb_secondary_1:
+#    image: ${mongodb_image}
+#    container_name: ${mongo_secondary_1_container_name}
+#    ports:
+#      - "27018:27017"
+#    networks:
+#      - mongodb_primary_to_secondary_1
+#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
+#
+#  mongodb_secondary_2:
+#    image: ${mongodb_image}
+#    container_name: ${mongo_secondary_2_container_name}
+#    ports:
+#      - "27019:27017"
+#    networks:
+#      - mongodb_primary_to_secondary_2
+#    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
+#
+#
+#  script-runner:
+#    image: ${script_runner_image}
+#    container_name: ${script_runner_container_name}
+#    command: sh -c 'sudo chmod +x ./set-replica.sh && /set-replica.sh && sleep 5 && docker stop script_runner'
+#    volumes:
+#      - ./set-replica.sh:/set-replica.sh
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    depends_on:
+#      - mongodb_primary
+#      - mongodb_secondary_1
+#      - mongodb_secondary_2
+#      - ubuntu_docker
+#    stdin_open: true
+#    tty: true
+#    networks:
+#      - mongodb_primary_to_secondary_1
+#      - mongodb_primary_to_secondary_2
 
   yolo5_app:
-    image: yolo5:0.0.1
-    container_name: yolo5_app
+    image: ${yolo5_image}
+    container_name: ${yolo_container_name}
     ports:
       - "8443:8443"
     volumes:
     - $HOME/aws/credentials:$HOME/aws/credentials
-    depends_on:
-      - yolo5_container
-      - script-runner
+#    depends_on:
+#      - script-runner
     networks:
-      - yolo to mongodb_primary
-      - polybot to yolo
+      - mongodb_primary_to_yolo
+      - yolo_to_polybot
+    env_file:
+      - .env
 
-  polybot_container:
-    build:
-      context: ./polybot
-      dockerfile: Dockerfile
-    container_name: polybot
-    image: polybot:0.0.1
 
   polybot_app:
-    image: polybot:0.0.1
+    image: ${polybot_image}
     container_name: polybot_app
-    depends_on:
-      - polybot_container
-      - script-runner
+#    depends_on:
+#      - script-runner
     networks:
-      - polybot to yolo
+      - yolo_to_polybot
+    env_file:
+      - .env
+
 
 networks:
-  Primarymongo_to_1:
-    name: Primarymongo_to_mongodb_secondary_1
-    driver: bridge
-  Primarymongo_to_2:
-    name: Primarymongo_to_mongodb_secondary_2
-    driver: bridge
-  yolo to mongodb_primary:
-    name: yolo to mongodb_primary
-    driver: bridge
-  polybot to yolo:
-    name: polybot to yolo
-    driver: bridge
+#  mongodb_primary_to_secondary_1:
+#    name: ${mongodb_primary_to_secondary_1}
+#    driver: ${driver}
+#  mongodb_primary_to_secondary_2:
+#    name: ${mongodb_primary_to_secondary_2}
+#    driver: ${driver}
+  mongodb_primary_to_yolo:
+    name: ${mongodb_primary_to_yolo}
+    driver: ${driver}
+  yolo_to_polybot:
+    name: ${yolo_to_polybot}
+    driver: ${driver}
+
+
+

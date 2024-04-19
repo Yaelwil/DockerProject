@@ -17,5 +17,5 @@ options- are static).
 
 
 def load_responses():
-    with open('polybot/responses.json', 'r') as file:
+    with open('responses.json', 'r') as file:
         return json.load(file)

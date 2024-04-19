@@ -15,6 +15,8 @@ import requests
 from img_proc import Img
 from responses import load_responses
 
+BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
+
 
 class Bot:
 
