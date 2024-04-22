@@ -72,7 +72,6 @@ services:
       - yolo_to_polybot
     ports:
       - "8443:8443"
-
     env_file:
       - .env
 
@@ -90,6 +89,3 @@ networks:
   yolo_to_polybot:
     name: ${yolo_to_polybot}
     driver: ${driver}
-
-
-
