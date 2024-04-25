@@ -34,7 +34,7 @@ services:
   script-runner:
     image: ${ubuntu_docker}
     container_name: ${ubuntu_container_name}
-    command: sh -c '/usr/local/bin/set-replica.sh && sleep 10 && docker stop script_runner'
+    command: sh -c '/usr/local/bin/set-replica.sh && sleep 10 && docker stop ubuntu_docker'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
@@ -74,6 +74,15 @@ services:
       - "8443:8443"
     env_file:
       - .env
+      
+#  ngrok:
+#      image: ubuntu_docker:0.0.4
+#      container_name: ngrok
+#      networks:
+#        - yolo_to_polybot
+#      command: sh -c 'ngrok start --authtoken $TELEGRAM_AUTOTOKEN $TELEGRAM_APP_URL'
+#      env_file:
+#        - .env
 
 
 networks:

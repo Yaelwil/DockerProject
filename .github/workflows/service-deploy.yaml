@@ -98,7 +98,7 @@ jobs:
             mongodb_image=mongo:4.4.0
             yolo5_image=yaeli1/yolov5:0.0.1
             polybot_image=yaeli1/polybot:0.0.1
-            ubuntu_docker=yaeli1/ubuntu_docker:0.0.2
+            ubuntu_docker=yaeli1/ubuntu_docker:0.0.3
             
             # container names
             mongo_primary_container_name=mongodb_primary
@@ -118,6 +118,7 @@ jobs:
             # AWS variables
             BUCKET_NAME=yaelwil-dockerproject
             TELEGRAM_BOT_TOKEN = ${{ secrets.TELEGRAM_BOT_TOKEN }}
+            TELEGRAM_AUTOTOKEN = ${{ secrets.TELEGRAM_AUTOTOKEN }}
             """ > .env
             
             # Take the service down
