@@ -53,8 +53,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-    - $HOME/aws/credentials:$HOME/aws/credentials
-    - ~/Desktop/images:/app/image
+    - /home/yael/.aws/credentials:/root/.aws/credentials
     depends_on:
       - script-runner
     networks:
@@ -71,6 +70,8 @@ services:
       - script-runner
     networks:
       - yolo_to_polybot
+    volumes:
+    - /home/yael/.aws/credentials:/root/.aws/credentials
     ports:
       - "8443:8443"
     env_file:
