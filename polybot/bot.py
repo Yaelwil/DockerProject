@@ -97,6 +97,8 @@ class Bot:
         elif 'text' in msg and any(word in msg['text'].lower() for word in ['help']):
             help_response = '\n'.join(self.responses['help'])
             self.send_text(msg['chat']['id'], help_response)
+        elif 'text' in msg and any(word in msg['text'].lower() for word in ['blur', 'contour', 'rotate', 'salt and pepper', 'segment', 'random color', 'predict']):
+            self.send_text(msg['chat']['id'], "Don't forget to send photo")
         else:
             # If no greeting or well-being question, respond with the original message
             default_response = random.choice(self.responses['default'])
@@ -253,7 +255,7 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the URL of the YOLOv5 service for prediction
-            yolo5_base_url = "http://localhost:8081/predict"
+            yolo5_base_url = f"http://yolo_app:8081/predict"
 
             # URL for prediction with the new_photo_path parameter
             yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
