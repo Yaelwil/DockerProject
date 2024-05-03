@@ -9,6 +9,7 @@ import sys
 from datetime import datetime
 import boto3
 import requests
+import json
 
 #from polybot.img_proc import Img
 #from polybot.responses import load_responses
@@ -148,7 +149,7 @@ class ObjectDetectionBot(Bot):
                 new_file_name = f"{formatted_time}{file_extension}"
 
             # Rename the file
-            new_photo_path = os.path.join(os.path.dirname(photo_path), new_file_name)
+            new_photo_path = os.path.join(os.path.dirname(photo_path), new_file_name.lstrip("/"))
             os.rename(photo_path, new_photo_path)
 
             return new_photo_path, new_file_name
@@ -189,7 +190,7 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the directory path in the bucket
-            s3_directory_path = 'picture/'
+            s3_directory_path = 'photos/'
 
             # Ensure the directory exists in the S3 bucket
             self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
@@ -209,18 +210,22 @@ class ObjectDetectionBot(Bot):
             logger.error(f"Error uploading photo to S3: {e}")
             return None
 
-    def process_prediction_results(self, prediction_results):
+    def process_prediction_results(self, json_file_path):
         """
         Process the response from YOLO to the format required in the project.
 
         Parameters:
-            prediction_results (JSON): Prediction results from YOLOv5.
+            json_file_path (str): Path to the JSON file containing prediction results.
 
         Returns:
-            processed_results (JSON): Processed prediction to the format required in the project.
+            processed_results (list): Processed prediction to the format required in the project.
         """
 
         try:
+            # Load the prediction results from the JSON file
+            with open(json_file_path, "r") as json_file:
+                prediction_results = json.load(json_file)
+
             # Assuming prediction_results is a JSON object
             # Extract relevant information
             detections = prediction_results['detections']
@@ -241,6 +246,9 @@ class ObjectDetectionBot(Bot):
 
             return processed_results
 
+        except FileNotFoundError as e:
+            logger.error(f"Error: Prediction results file not found: {e}")
+            return None
         except KeyError as e:
             logger.error(f"Error parsing prediction results: {e}")
             return None
@@ -255,7 +263,7 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the URL of the YOLOv5 service for prediction
-            yolo5_base_url = f"http://yolo_app:8081/predict"
+            yolo5_base_url = "http://yolo_app:8081/predict"
 
             # URL for prediction with the new_photo_path parameter
             yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
@@ -267,7 +275,12 @@ class ObjectDetectionBot(Bot):
                 # Process the prediction results returned by the service
                 prediction_results = response.json()
 
-                processed_results = self.process_prediction_results(prediction_results)
+                # Save the prediction results to a JSON file
+                json_file_path = f"prediction_results_{new_photo_path}.json"
+                with open(json_file_path, "w") as json_file:
+                    json.dump(prediction_results, json_file, indent=4)
+
+                processed_results = self.process_prediction_results(json_file_path)
 
                 return processed_results
             else:

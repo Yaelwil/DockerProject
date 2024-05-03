@@ -8,6 +8,7 @@ from loguru import logger
 import os
 import pymongo
 import boto3
+from flask import Flask, jsonify
 
 images_bucket = os.environ['BUCKET_NAME']
 
@@ -28,13 +29,20 @@ def predict():
     # Receives a URL parameter representing the image to download from S3
     img_name = request.args.get('imgName')
 
+    if img_name is None:
+        logger.error("Missing 'imgName' parameter in the request")
+        return jsonify({"error": "Missing 'imgName' parameter"}), 400
+
     # Create an S3 client
     s3 = boto3.client('s3')
 
     # Define the local filename to save the downloaded file
     file_name = img_name.split('/')[-1]
-    original_img_path = os.path.join('~/', file_name)
+    # Expand the $HOME variable to the user's home directory
+    home_dir = os.path.expanduser('~')
 
+    # Define the full path to the file
+    original_img_path = os.path.join(home_dir, file_name)
     # Download the file
     s3.download_file(images_bucket, img_name, original_img_path)
 
@@ -50,19 +58,33 @@ def predict():
         save_txt=True
     )
 
-    logger.info(f'prediction: {prediction_id}/{original_img_path}. done')
+    logger.info(f'prediction: {prediction_id}{original_img_path}. done')
 
     # This is the path for the predicted image with labels
     # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels
     # and possibly confidence scores.
-    predicted_img_path = Path(f'static/data/{prediction_id}/{original_img_path}')
+    #predicted_img_path = Path(f'static/data/{prediction_id}{original_img_path}')
+    # Combine the base name and the file extension
+    # base_name, file_extension = os.path.splitext(original_img_path)
+    # new_file_name = f"{base_name}-predict{file_extension}"
 
-    base_name, file_extension = os.path.splitext(original_img_path)
+    # s3.upload_file(predicted_img_path, images_bucket, new_file_name)
+    # This is the path for the predicted image with labels
+    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels
+    # and possibly confidence scores.
+    predicted_img_path = f'static/data/{prediction_id}/{os.path.basename(original_img_path)}'
+
+    # Combine the base name and the file extension
+    base_name, file_extension = os.path.splitext(os.path.basename(original_img_path))
     new_file_name = f"{base_name}-predict{file_extension}"
 
+    # Upload the predicted image to S3
     s3.upload_file(predicted_img_path, images_bucket, new_file_name)
+
+    logger.info(f'prediction: {new_file_name}. was upload to s3 successfully')
+
     # Parse prediction labels and create a summary
-    pred_summary_path = Path(f'static/data/{prediction_id}/labels/{original_img_path.split(".")[0]}.txt')
+    pred_summary_path = Path(f'static/data/{prediction_id}/labels{original_img_path.split(".")[0]}.txt')
     if pred_summary_path.exists():
         with open(pred_summary_path) as f:
             labels = f.read().splitlines()
@@ -87,7 +109,7 @@ def predict():
 
         # TODO store the prediction_summary in MongoDB
         # Connect to MongoDB
-        client = pymongo.MongoClient("mongodb://localhost:27017/")
+        client = pymongo.MongoClient("mongodb://mongodb_primary:27017/")
         db = client["docker_project"]
         # Select or create a collection for predictions
         collection = db["predictions"]
