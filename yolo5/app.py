@@ -60,26 +60,22 @@ def predict():
 
     logger.info(f'prediction: {prediction_id}{original_img_path}. done')
 
-    # This is the path for the predicted image with labels
-    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels
-    # and possibly confidence scores.
-    #predicted_img_path = Path(f'static/data/{prediction_id}{original_img_path}')
-    # Combine the base name and the file extension
-    # base_name, file_extension = os.path.splitext(original_img_path)
-    # new_file_name = f"{base_name}-predict{file_extension}"
 
-    # s3.upload_file(predicted_img_path, images_bucket, new_file_name)
-    # This is the path for the predicted image with labels
-    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels
-    # and possibly confidence scores.
     predicted_img_path = f'static/data/{prediction_id}/{os.path.basename(original_img_path)}'
 
     # Combine the base name and the file extension
     base_name, file_extension = os.path.splitext(os.path.basename(original_img_path))
     new_file_name = f"{base_name}-predict{file_extension}"
 
+    # new folder in S3
+    s3_predicted_directory_path = 'predicted_photos/'
+
+    # full name in S3
+    full_name_s3=s3_predicted_directory_path + new_file_name
+
+
     # Upload the predicted image to S3
-    s3.upload_file(predicted_img_path, images_bucket, new_file_name)
+    s3.upload_file(predicted_img_path, images_bucket, full_name_s3)
 
     logger.info(f'prediction: {new_file_name}. was upload to s3 successfully')
 

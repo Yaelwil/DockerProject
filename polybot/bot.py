@@ -191,9 +191,11 @@ class ObjectDetectionBot(Bot):
         try:
             # Specify the directory path in the bucket
             s3_directory_path = 'photos/'
+            s3_predicted_directory_path = 'predicted_photos/'
 
             # Ensure the directory exists in the S3 bucket
             self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
+            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_predicted_directory_path)
 
             # Extract filename from the path
             filename = os.path.basename(photo_path)
@@ -269,7 +271,8 @@ class ObjectDetectionBot(Bot):
             yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
 
             # Send HTTP request to the YOLOv5 service
-            response = requests.post(yolo5_url)
+            yolo5_url_correct = yolo5_url.replace("//root", "/root")
+            response = requests.post(yolo5_url_correct)
 
             if response.status_code == 200:
                 # Process the prediction results returned by the service
