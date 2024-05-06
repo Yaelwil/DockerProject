@@ -9,8 +9,13 @@ import os
 import pymongo
 import boto3
 from flask import Flask, jsonify
+import json
 
 images_bucket = os.environ['BUCKET_NAME']
+# db_username = os.environ['db_username']
+# db_password = os.environ['db_password']
+# #db_hostname = os.environ['localhost']
+# db_port = os.environ['db_port']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
@@ -80,7 +85,10 @@ def predict():
     logger.info(f'prediction: {new_file_name}. was upload to s3 successfully')
 
     # Parse prediction labels and create a summary
-    pred_summary_path = Path(f'static/data/{prediction_id}/labels{original_img_path.split(".")[0]}.txt')
+    pred_summary_path = Path(f'static/data/{prediction_id}/labels/{original_img_path.split("/")[-1].split(".")[0]}.txt')
+
+    logger.info(f'pred_summary_path = {pred_summary_path}')
+
     if pred_summary_path.exists():
         with open(pred_summary_path) as f:
             labels = f.read().splitlines()
@@ -103,14 +111,30 @@ def predict():
             'time': time.time()
         }
 
+        # Define the path where you want to save the JSON file
+        json_file_path = "prediction_summary.json"
+
+        # Write the prediction summary to a JSON file
+        with open(json_file_path, 'w') as json_file:
+            json.dump(prediction_summary, json_file)
+
+        logger.info(f'json_file_path: {json_file_path}')
+
         # TODO store the prediction_summary in MongoDB
-        # Connect to MongoDB
-        client = pymongo.MongoClient("mongodb://mongodb_primary:27017/")
-        db = client["docker_project"]
-        # Select or create a collection for predictions
-        collection = db["predictions"]
-        # Insert JSON data into MongoDB
-        collection.insert_one(prediction_summary)
+        # Connect to MongoDB to store prediction_summary
+        # client = pymongo.MongoClient("mongodb://mongodb_primary:27017/")
+        # db = client["docker_project"]
+        # collection = db["predictions"]
+        #
+        # # Insert JSON data into MongoDB
+        # collection.insert_one(prediction_summary)
+        #
+        # # Connect to MongoDB to create a new user
+        # client = pymongo.MongoClient(f"mongodb://{db_username}:{db_password}@{db_hostname}:{db_port}/docker_project")
+        #
+        # db = client['docker_project']
+        # # Create a new user
+        # db.command("createUser", "yaeli", pwd="123456", roles=["readWrite"])
 
         return prediction_summary
     else:

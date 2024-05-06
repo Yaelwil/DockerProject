@@ -85,5 +85,26 @@
         "You need to send me photo, add captions, and I will do the magic for you",
         "Keep in mind that the photo I send you back is in grey-scale",
         "To find out about the potential filters text me 'filter'"
+      ],
+      "blur_info": [
+        "This filter applies a blurring effect to the image, reducing sharpness and details. It can be useful for smoothing out noise or reducing the appearance of small imperfections."
+      ],
+      "contour_info": [
+        "Contour detection is a technique used to find the edges or boundaries of objects within an image. It's commonly used for object recognition and image segmentation tasks."
+      ],
+      "rotate_info": [
+        "This filter rotates the image by a specified angle. Rotating an image can be helpful for correcting orientation or creating artistic effects."
+      ],
+      "salt_and_pepper_info": [
+        "Salt and pepper noise is a type of noise that randomly sprinkles white and black pixels throughout the image. This filter adds this type of noise to the image, simulating the effect of a noisy image sensor."
+      ],
+      "segment_info": [
+        "Image segmentation divides an image into multiple segments or regions based on certain criteria, such as color, intensity, or texture. It's often used for object detection, image analysis, and computer vision tasks."
+      ],
+      "random_colors_info": [
+        "This filter assigns random colors to different regions or segments of the image. It can be used for artistic effects or visualizations."
+      ],
+      "predict_info": [
+        "This option likely refers to applying some form of machine learning or deep learning model to make predictions on the image. The specific prediction task would depend on the model used and its training data."
       ]
 }

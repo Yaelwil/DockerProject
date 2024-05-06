@@ -98,6 +98,30 @@ class Bot:
         elif 'text' in msg and any(word in msg['text'].lower() for word in ['help']):
             help_response = '\n'.join(self.responses['help'])
             self.send_text(msg['chat']['id'], help_response)
+        elif 'text' in msg and 'what is' in msg['text'].lower() and any(word in msg['text'].lower() for word in
+                                                                        ['blur', 'contour', 'rotate', 'salt and pepper',
+                                                                         'segment', 'random colors', 'predict']):
+            # Extract the filter mentioned in the message
+            mentioned_filter = next((word for word in
+                                     ['blur', 'contour', 'rotate', 'salt and pepper', 'segment', 'random colors',
+                                      'predict'] if word in msg['text'].lower()), None)
+            if mentioned_filter:
+                # Provide relevant information based on the mentioned filter
+                if mentioned_filter == 'blur':
+                    self.send_text(msg['chat']['id'], self.responses['blur_info'])
+                elif mentioned_filter == 'contour':
+                    self.send_text(msg['chat']['id'], self.responses['contour_info'])
+                elif mentioned_filter == 'rotate':
+                    self.send_text(msg['chat']['id'], self.responses['rotate_info'])
+                elif mentioned_filter == 'salt_and_pepper':
+                    self.send_text(msg['chat']['id'], self.responses['salt and pepper_info'])
+                elif mentioned_filter == 'segment':
+                    self.send_text(msg['chat']['id'], self.responses['segment_info'])
+                elif mentioned_filter == 'random colors':
+                    self.send_text(msg['chat']['id'], self.responses['random_colors_info'])
+                elif mentioned_filter == 'predict':
+                    self.send_text(msg['chat']['id'], self.responses['predict_info'])
+
         elif 'text' in msg and any(word in msg['text'].lower() for word in ['blur', 'contour', 'rotate', 'salt and pepper', 'segment', 'random color', 'predict']):
             self.send_text(msg['chat']['id'], "Don't forget to send photo")
         else:
@@ -230,21 +254,19 @@ class ObjectDetectionBot(Bot):
 
             # Assuming prediction_results is a JSON object
             # Extract relevant information
-            detections = prediction_results['detections']
+            labels = prediction_results.get('labels', [])
 
             # Count occurrences of each object
             object_count = {}
-            for detection in detections:
-                label = detection['label']
+            for label_info in labels:
+                label = label_info['class']
                 if label in object_count:
                     object_count[label] += 1
                 else:
                     object_count[label] = 1
 
-            # Format the results
-            processed_results = []
-            for label, count in object_count.items():
-                processed_results.append(f"{label}: {count}")
+            # Format the results as a list of dictionaries
+            processed_results = [{'class': label, 'count': count} for label, count in object_count.items()]
 
             return processed_results
 
@@ -270,18 +292,26 @@ class ObjectDetectionBot(Bot):
             # URL for prediction with the new_photo_path parameter
             yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"
 
-            # Send HTTP request to the YOLOv5 service
-            yolo5_url_correct = yolo5_url.replace("//root", "/root")
-            response = requests.post(yolo5_url_correct)
+            yolo5_url_corrected = yolo5_url
+
+            # Replace "//root" with "/root" only at the beginning of the query string parameter "imgName"
+            if yolo5_url.startswith("//root/"):
+                yolo5_url_corrected = yolo5_url.replace("//root/", "/root/")
+
+            logger.info(f'yolo5_url_correct: {yolo5_url_corrected}')
+
+            response = requests.post(yolo5_url_corrected)
 
             if response.status_code == 200:
                 # Process the prediction results returned by the service
                 prediction_results = response.json()
 
                 # Save the prediction results to a JSON file
-                json_file_path = f"prediction_results_{new_photo_path}.json"
-                with open(json_file_path, "w") as json_file:
-                    json.dump(prediction_results, json_file, indent=4)
+                json_file_path = "prediction_summary.json"  # Remove last four characters from new_photo_path
+                with open(json_file_path, 'w') as json_file:
+                    json.dump(prediction_results, json_file)
+
+                logger.info(f"Prediction results saved to {json_file_path}")
 
                 processed_results = self.process_prediction_results(json_file_path)
 
@@ -304,9 +334,12 @@ class ObjectDetectionBot(Bot):
                 # Convert the processed results to a list of strings
                 formatted_results = []
                 for result in processed_results:
-                    # Assuming each result is a dictionary
-                    formatted_result = f"Label: {result['label']}, Confidence: {result['confidence']}"
-                    formatted_results.append(formatted_result)
+                    if 'class' in result and 'confidence' in result:  # Ensure keys are present
+                        formatted_result = f"Label: {result['class']}, Confidence: {result['confidence']}"
+                        formatted_results.append(formatted_result)
+                    else:
+                        logger.error("Invalid format of processed results.")
+                        return  # Exit function if the format is invalid
 
                 # Join the formatted results into a single string
                 processed_results_message = "Prediction results:\n" + "\n".join(formatted_results)
@@ -446,13 +479,13 @@ class ObjectDetectionBot(Bot):
 
                 if s3_key:
                     # Call the YOLOv5 service
-                    self.call_yolo_service(new_photo_path)
+                    processed_results = self.call_yolo_service(new_photo_path)
 
                     # Obtain the chat ID from the incoming message
                     chat_id = msg['chat']['id']
 
                     # Send the prediction results to Telegram user
-                    processed_results_message = self.send_prediction_results_to_telegram(chat_id)
+                    processed_results_message = self.send_prediction_results_to_telegram(processed_results)
 
                     # Check if the processed results message exist
                     if processed_results_message:
