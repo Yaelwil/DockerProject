@@ -19,6 +19,7 @@ from responses import load_responses
 BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
 
 
+
 class Bot:
 
     def __init__(self, token, telegram_chat_url):
@@ -216,10 +217,12 @@ class ObjectDetectionBot(Bot):
             # Specify the directory path in the bucket
             s3_directory_path = 'photos/'
             s3_predicted_directory_path = 'predicted_photos/'
+            s3_json_folder = 'json/'
 
             # Ensure the directory exists in the S3 bucket
             self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
             self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_predicted_directory_path)
+            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_json_folder)
 
             # Extract filename from the path
             filename = os.path.basename(photo_path)
@@ -277,12 +280,13 @@ class ObjectDetectionBot(Bot):
             logger.error(f"Error parsing prediction results: {e}")
             return None
 
-    def call_yolo_service(self, new_photo_path):
+    def call_yolo_service(self, new_photo_path, chat_id):
         """
         Sends an HTTPS request to YOLO to make a prediction of the photo.
 
         Parameters:
             new_photo_path (str): The new path to the photo file locally, from "rename_photo_with_timestamp" method.
+            chat_id (int): Chat ID obtained from the incoming message.
         """
 
         try:
@@ -302,6 +306,8 @@ class ObjectDetectionBot(Bot):
 
             response = requests.post(yolo5_url_corrected)
 
+            logger.info(f'response')
+
             if response.status_code == 200:
                 # Process the prediction results returned by the service
                 prediction_results = response.json()
@@ -316,6 +322,10 @@ class ObjectDetectionBot(Bot):
                 processed_results = self.process_prediction_results(json_file_path)
 
                 return processed_results
+            elif response.status_code == 404:
+
+                self.send_text(chat_id, "Error processing the photo")
+
             else:
                 logger.error(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
@@ -335,7 +345,7 @@ class ObjectDetectionBot(Bot):
                 formatted_results = []
                 for result in processed_results:
                     if 'class' in result:  # Ensure keys are present
-                        formatted_result = f"Object: {result['class']}, Count: {result['count']}"
+                        formatted_result = f"Object: {result['class']} Count: {result['count']}"
                         formatted_results.append(formatted_result)
                     else:
                         logger.error("Invalid format of processed results.")
@@ -477,12 +487,13 @@ class ObjectDetectionBot(Bot):
                 # Upload the photo to S3
                 s3_key = self.upload_photo_to_s3(new_photo_path)
 
+                # Obtain the chat ID from the incoming message
+                chat_id = msg['chat']['id']
+
                 if s3_key:
                     # Call the YOLOv5 service
-                    processed_results = self.call_yolo_service(new_photo_path)
 
-                    # Obtain the chat ID from the incoming message
-                    chat_id = msg['chat']['id']
+                    processed_results = self.call_yolo_service(new_photo_path, chat_id)
 
                     # Send the prediction results to Telegram user
                     processed_results_message = self.send_prediction_results_to_telegram(processed_results)
