@@ -334,8 +334,8 @@ class ObjectDetectionBot(Bot):
                 # Convert the processed results to a list of strings
                 formatted_results = []
                 for result in processed_results:
-                    if 'class' in result and 'confidence' in result:  # Ensure keys are present
-                        formatted_result = f"Label: {result['class']}, Confidence: {result['confidence']}"
+                    if 'class' in result:  # Ensure keys are present
+                        formatted_result = f"Object: {result['class']}, Count: {result['count']}"
                         formatted_results.append(formatted_result)
                     else:
                         logger.error("Invalid format of processed results.")
