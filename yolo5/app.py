@@ -10,12 +10,11 @@ import pymongo
 import boto3
 from flask import Flask, jsonify
 import json
+import logging
+
+from pymongo import MongoClient
 
 images_bucket = os.environ['BUCKET_NAME']
-# db_username = os.environ['db_username']
-# db_password = os.environ['db_password']
-# #db_hostname = os.environ['localhost']
-# db_port = os.environ['db_port']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
@@ -112,7 +111,7 @@ def predict():
         }
 
         # Define the path where you want to save the JSON file
-        json_file_path = "prediction_summary.json"
+        json_file_path = f'{base_name}.json'
 
         # Write the prediction summary to a JSON file
         with open(json_file_path, 'w') as json_file:
@@ -120,23 +119,50 @@ def predict():
 
         logger.info(f'json_file_path: {json_file_path}')
 
+        # Upload json file to S3
+        json_folder_path = "json"
+        json_full_path = f'{json_folder_path}/{json_file_path}'
+
+        logger.info(f'json directory path: {json_full_path}')
+
+        s3.upload_file(json_file_path, images_bucket, json_full_path)
+        logger.info('Upload successfully the results to S3')
+
+
+
         # TODO store the prediction_summary in MongoDB
-        # Connect to MongoDB to store prediction_summary
-        # client = pymongo.MongoClient("mongodb://mongodb_primary:27017/")
-        # db = client["docker_project"]
-        # collection = db["predictions"]
-        #
-        # # Insert JSON data into MongoDB
-        # collection.insert_one(prediction_summary)
-        #
-        # # Connect to MongoDB to create a new user
-        # client = pymongo.MongoClient(f"mongodb://{db_username}:{db_password}@{db_hostname}:{db_port}/docker_project")
-        #
-        # db = client['docker_project']
-        # # Create a new user
-        # db.command("createUser", "yaeli", pwd="123456", roles=["readWrite"])
+
+        try:
+            logger.info("Connecting to MongoDB...")
+            connection_string = "mongodb://mongodb_primary:27017/"
+            logger.info(f"Connection string: {connection_string}")
+
+            client = MongoClient(connection_string)
+            logger.info("MongoClient connected successfully.")
+
+            db = client['mydatabase']
+            collection_name = 'prediction'
+            collection = db[collection_name]
+            logger.info("Inserting data...")
+
+            # Insert data into MongoDB
+            result = collection.insert_one(prediction_summary)
+
+            if result.acknowledged:
+                logger.info("Data inserted successfully.")
+            else:
+                logger.error("Failed to insert data into MongoDB.")
+
+            # Close MongoDB client connection
+            client.close()
+
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            # Handle the error or re-raise it depending on your requirements
+            raise
 
         return prediction_summary
+
     else:
         return f'prediction: {prediction_id}/{original_img_path}. prediction result not found', 404
 
