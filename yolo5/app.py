@@ -132,34 +132,34 @@ def predict():
 
         # TODO store the prediction_summary in MongoDB
 
-        try:
-            logger.info("Connecting to MongoDB...")
-            connection_string = "mongodb://mongodb_primary:27017/"
-            logger.info(f"Connection string: {connection_string}")
-
-            client = MongoClient(connection_string)
-            logger.info("MongoClient connected successfully.")
-
-            db = client['mydatabase']
-            collection_name = 'prediction'
-            collection = db[collection_name]
-            logger.info("Inserting data...")
-
-            # Insert data into MongoDB
-            result = collection.insert_one(prediction_summary)
-
-            if result.acknowledged:
-                logger.info("Data inserted successfully.")
-            else:
-                logger.error("Failed to insert data into MongoDB.")
-
-            # Close MongoDB client connection
-            client.close()
-
-        except Exception as e:
-            logger.error(f"Error: {e}")
-            # Handle the error or re-raise it depending on your requirements
-            raise
+        # try:
+        #     logger.info("Connecting to MongoDB...")
+        #     connection_string = "mongodb://mongodb_primary:27017/"
+        #     logger.info(f"Connection string: {connection_string}")
+        #
+        #     client = MongoClient(connection_string)
+        #     logger.info("MongoClient connected successfully.")
+        #
+        #     db = client['mydatabase']
+        #     collection_name = 'prediction'
+        #     collection = db[collection_name]
+        #     logger.info("Inserting data...")
+        #
+        #     # Insert data into MongoDB
+        #     result = collection.insert_one(prediction_summary)
+        #
+        #     if result.acknowledged:
+        #         logger.info("Data inserted successfully.")
+        #     else:
+        #         logger.error("Failed to insert data into MongoDB.")
+        #
+        #     # Close MongoDB client connection
+        #     client.close()
+        #
+        # except Exception as e:
+        #     logger.error(f"Error: {e}")
+        #     # Handle the error or re-raise it depending on your requirements
+        #     raise
 
         return prediction_summary
 
