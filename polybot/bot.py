@@ -215,9 +215,9 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the directory path in the bucket
-            s3_directory_path = 'photos/'
-            s3_predicted_directory_path = 'predicted_photos/'
-            s3_json_folder = 'json/'
+            s3_directory_path = 'photos'
+            s3_predicted_directory_path = 'predicted_photos'
+            s3_json_folder = 'json'
 
             # Ensure the directory exists in the S3 bucket
             self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
@@ -228,7 +228,7 @@ class ObjectDetectionBot(Bot):
             filename = os.path.basename(photo_path)
 
             # Combine directory path and filename to form the S3 key
-            s3_key = s3_directory_path + filename
+            s3_key = s3_directory_path + '/' + filename
 
             # Upload the photo to S3
             self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)

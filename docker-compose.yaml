@@ -6,46 +6,47 @@ services:
     container_name: ${mongo_primary_container_name}
     ports:
       - "27017:27017"
+    volumes:
+       - mongodb_primary_volume:/data/db
     networks:
-      - mongodb_primary_to_secondary_1
-      - mongodb_primary_to_secondary_2
+      - mongodb_replica_set
       - mongodb_primary_to_yolo
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_primary
+    command: mongod --replSet myReplicaSet --bind_ip_all
 
   mongodb_secondary_1:
     image: ${mongodb_image}
     container_name: ${mongo_secondary_1_container_name}
     ports:
       - "27018:27017"
+    volumes:
+      - mongodb_secondary_1_volume:/data/db
     networks:
-      - mongodb_primary_to_secondary_1
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_1
+      - mongodb_replica_set
+    command: mongod --replSet myReplicaSet --bind_ip_all
 
   mongodb_secondary_2:
     image: ${mongodb_image}
     container_name: ${mongo_secondary_2_container_name}
     ports:
       - "27019:27017"
+    volumes:
+      - mongodb_secondary_2_volume:/data/db
     networks:
-      - mongodb_primary_to_secondary_2
-    command: mongod --replSet myReplicaSet --bind_ip localhost,mongodb_secondary_2
+      - mongodb_replica_set
+    command: mongod --replSet myReplicaSet --bind_ip_all
 
 
   script-runner:
     image: ${ubuntu_docker}
     container_name: ${ubuntu_container_name}
-    command: sh -c 'sleep 10 && /usr/local/bin/set-replica.sh && sleep 10 && docker stop ubuntu_docker'
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - mongodb_primary
       - mongodb_secondary_1
       - mongodb_secondary_2
-    stdin_open: true
-    tty: true
     networks:
-      - mongodb_primary_to_secondary_1
-      - mongodb_primary_to_secondary_2
+      - mongodb_replica_set
 
   yolo5_app:
     image: ${yolo5_image}
@@ -93,11 +94,8 @@ services:
 
 
 networks:
-  mongodb_primary_to_secondary_1:
-    name: ${mongodb_primary_to_secondary_1}
-    driver: ${driver}
-  mongodb_primary_to_secondary_2:
-    name: ${mongodb_primary_to_secondary_2}
+  mongodb_replica_setv:
+    name: ${mongodb_replica_set}
     driver: ${driver}
   mongodb_primary_to_yolo:
     name: ${mongodb_primary_to_yolo}
@@ -105,3 +103,8 @@ networks:
   yolo_to_polybot:
     name: ${yolo_to_polybot}
     driver: ${driver}
+
+volumes:
+  mongodb_primary_volume:
+  mongodb_secondary_1_volume:
+  mongodb_secondary_2_volume:

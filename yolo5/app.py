@@ -1,18 +1,15 @@
 import time
 from pathlib import Path
-from flask import Flask, request
+from flask import request, Flask, jsonify
 from detect import run
 import uuid
 import yaml
 from loguru import logger
 import os
-import pymongo
 import boto3
-from flask import Flask, jsonify
 import json
-import logging
-
 from pymongo import MongoClient
+from bson import ObjectId
 
 images_bucket = os.environ['BUCKET_NAME']
 
@@ -20,7 +17,15 @@ with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 
 app = Flask(__name__)
-
+def convert_objectid(data):
+    if isinstance(data, dict):
+        return {key: convert_objectid(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_objectid(item) for item in data]
+    elif isinstance(data, ObjectId):
+        return str(data)  # Convert ObjectId to string
+    else:
+        return data
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -132,36 +137,36 @@ def predict():
 
         # TODO store the prediction_summary in MongoDB
 
-        # try:
-        #     logger.info("Connecting to MongoDB...")
-        #     connection_string = "mongodb://mongodb_primary:27017/"
-        #     logger.info(f"Connection string: {connection_string}")
-        #
-        #     client = MongoClient(connection_string)
-        #     logger.info("MongoClient connected successfully.")
-        #
-        #     db = client['mydatabase']
-        #     collection_name = 'prediction'
-        #     collection = db[collection_name]
-        #     logger.info("Inserting data...")
-        #
-        #     # Insert data into MongoDB
-        #     result = collection.insert_one(prediction_summary)
-        #
-        #     if result.acknowledged:
-        #         logger.info("Data inserted successfully.")
-        #     else:
-        #         logger.error("Failed to insert data into MongoDB.")
-        #
-        #     # Close MongoDB client connection
-        #     client.close()
-        #
-        # except Exception as e:
-        #     logger.error(f"Error: {e}")
-        #     # Handle the error or re-raise it depending on your requirements
-        #     raise
+        try:
+            logger.info("Connecting to MongoDB...")
+            connection_string = "mongodb://mongodb_primary:27017/"
+            logger.info(f"Connection string: {connection_string}")
 
-        return prediction_summary
+            client = MongoClient(connection_string)
+            logger.info("MongoClient connected successfully.")
+
+            db = client['mydatabase']
+            collection_name = 'prediction'
+            collection = db[collection_name]
+            logger.info("Inserting data...")
+
+            # Insert data into MongoDB
+            result = collection.insert_one(prediction_summary)
+
+            if result.acknowledged:
+                logger.info("Data inserted successfully.")
+            else:
+                logger.error("Failed to insert data into MongoDB.")
+
+            # Close MongoDB client connection
+            client.close()
+
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            # Handle the error or re-raise it depending on your requirements
+            raise
+
+        return convert_objectid(prediction_summary)
 
     else:
         return f'prediction: {prediction_id}/{original_img_path}. prediction result not found', 404
