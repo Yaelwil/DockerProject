@@ -39,8 +39,6 @@ services:
   script-runner:
     image: ${ubuntu_docker}
     container_name: ${ubuntu_container_name}
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - mongodb_primary
       - mongodb_secondary_1
@@ -53,8 +51,6 @@ services:
     container_name: ${yolo_container_name}
     ports:
       - "8081:8081"
-    volumes:
-    - /home/yael/.aws/credentials:/root/.aws/credentials
     depends_on:
       - script-runner
     stdin_open: true
@@ -76,21 +72,10 @@ services:
       - script-runner
     networks:
       - yolo_to_polybot
-    volumes:
-    - /home/yael/.aws/credentials:/root/.aws/credentials
     ports:
       - "8443:8443"
     env_file:
       - .env
-
-#  ngrok:
-#      image: ubuntu_docker:0.0.4
-#      container_name: ngrok
-#      networks:
-#        - yolo_to_polybot
-#      command: sh -c 'ngrok start --authtoken $TELEGRAM_AUTOTOKEN $TELEGRAM_APP_URL'
-#      env_file:
-#        - .env
 
 
 networks:
