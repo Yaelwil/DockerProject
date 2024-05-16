@@ -17,6 +17,8 @@ with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 
 app = Flask(__name__)
+
+
 def convert_objectid(data):
     if isinstance(data, dict):
         return {key: convert_objectid(value) for key, value in data.items()}

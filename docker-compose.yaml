@@ -94,7 +94,7 @@ services:
 
 
 networks:
-  mongodb_replica_setv:
+  mongodb_replica_set:
     name: ${mongodb_replica_set}
     driver: ${driver}
   mongodb_primary_to_yolo:
