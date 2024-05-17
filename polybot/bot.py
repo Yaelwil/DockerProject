@@ -10,11 +10,10 @@ from datetime import datetime
 import boto3
 import requests
 import json
-
-#from polybot.img_proc import Img
-#from polybot.responses import load_responses
 from img_proc import Img
 from responses import load_responses
+from detect_filters import Detect_Filters
+from filters import Filters
 
 BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
 
@@ -138,148 +137,6 @@ class ObjectDetectionBot(Bot):
         self.responses = load_responses()
         self.s3 = boto3.client('s3')
 
-    def rename_photo_with_timestamp(self, photo_path):
-        """
-        Rename a photo with a timestamp in the format 'yyyy-mm-dd HH:MM:SS'.
-        If multiple photos are saved within the same minute, append a counter
-        to the filename.
-
-        Parameters:
-            photo_path (str): The path to the photo file locally.
-
-        Returns:
-            new_photo_path (str): The new path to the photo file locally.
-            new_file_name (str): The new file name locally.
-        """
-
-        try:
-            # Get current date and time
-            current_time = datetime.now()
-
-            # Format the datetime as required
-            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-
-            # Get the file extension
-            file_name, file_extension = os.path.splitext(photo_path)
-
-            # Check if there's already a photo saved in the same minute
-            same_minute_files = [f for f in os.listdir(os.path.dirname(photo_path)) if f.startswith(formatted_time)]
-
-            # Construct the new file name
-            if same_minute_files:
-                # Append a counter to the file name
-                counter = len(same_minute_files) + 1
-                new_file_name = f"{formatted_time} p{counter}{file_extension}"
-            else:
-                new_file_name = f"{formatted_time}{file_extension}"
-
-            # Rename the file
-            new_photo_path = os.path.join(os.path.dirname(photo_path), new_file_name.lstrip("/"))
-            os.rename(photo_path, new_photo_path)
-
-            return new_photo_path, new_file_name
-
-        except Exception as e:
-            logger.error(f"Error renaming photo: {e}")
-            raise
-
-    def ensure_s3_directory_exists(self, bucket, directory):
-        """
-        Makes sure that the specified directory exists in S3. If not, it creates the folder.
-
-        Parameters:
-            bucket (str): Bucket name.
-            directory (str): Directory to check.
-        """
-
-        try:
-            # Check if the directory exists by listing objects in the directory
-            self.s3.head_object(Bucket=bucket, Key=(directory + '/'))
-        except self.s3.exceptions.ClientError as e:
-            # If the directory doesn't exist, create it
-            if e.response['Error']['Code'] == '404':
-                self.s3.put_object(Bucket=bucket, Key=(directory + '/'))
-            else:
-                raise  # Raise the exception if it's not a '404 Not Found' error
-
-    def upload_photo_to_s3(self, photo_path):
-        """
-        Upload the photo to S3 bucket.
-
-        Parameters:
-            photo_path (str): The path to the photo file locally.
-
-        Returns:
-            s3_key (str): The new path to the photo file in S3.
-        """
-
-        try:
-            # Specify the directory path in the bucket
-            s3_directory_path = 'photos'
-            s3_predicted_directory_path = 'predicted_photos'
-            s3_json_folder = 'json'
-
-            # Ensure the directory exists in the S3 bucket
-            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
-            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_predicted_directory_path)
-            self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_json_folder)
-
-            # Extract filename from the path
-            filename = os.path.basename(photo_path)
-
-            # Combine directory path and filename to form the S3 key
-            s3_key = s3_directory_path + '/' + filename
-
-            # Upload the photo to S3
-            self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)
-
-            # Return the S3 key
-            return s3_key
-        except Exception as e:
-            logger.error(f"Error uploading photo to S3: {e}")
-            return None
-
-    def process_prediction_results(self, json_file_path):
-        """
-        Process the response from YOLO to the format required in the project.
-
-        Parameters:
-            json_file_path (str): Path to the JSON file containing prediction results.
-
-        Returns:
-            processed_results (list): Processed prediction to the format required in the project.
-        """
-
-        try:
-            # Load the prediction results from the JSON file
-            with open(json_file_path, "r") as json_file:
-                prediction_results = json.load(json_file)
-
-            # Assuming prediction_results is a JSON object
-            # Extract relevant information
-            labels = prediction_results.get('labels', [])
-
-            # Count occurrences of each object
-            object_count = {}
-            for label_info in labels:
-                label = label_info['class']
-                if label in object_count:
-                    object_count[label] += 1
-                else:
-                    object_count[label] = 1
-
-            # Format the results as a list of dictionaries
-            processed_results = [{'class': label, 'count': count} for label, count in object_count.items()]
-
-            return processed_results
-
-        except FileNotFoundError as e:
-            logger.error(f"Error: Prediction results file not found: {e}")
-            return None
-        except KeyError as e:
-            logger.error(f"Error parsing prediction results: {e}")
-            return None
-
     def call_yolo_service(self, new_photo_path, chat_id):
         """
         Sends an HTTPS request to YOLO to make a prediction of the photo.
@@ -318,10 +175,8 @@ class ObjectDetectionBot(Bot):
                     json.dump(prediction_results, json_file)
 
                 logger.info(f"Prediction results saved to {json_file_path}")
+                return json_file_path
 
-                processed_results = self.process_prediction_results(json_file_path)
-
-                return processed_results
             elif response.status_code == 404:
 
                 self.send_text(chat_id, "Error processing the photo")
@@ -330,36 +185,6 @@ class ObjectDetectionBot(Bot):
                 logger.error(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
             logger.error(f"Error calling YOLOv5 service: {e}")
-
-    def send_prediction_results_to_telegram(self, processed_results):
-        """
-        Sends the prediction message to the Telegram user.
-
-        Parameters:
-            processed_results (JSON): Processed prediction to the format required in the project.
-        """
-
-        try:
-            if processed_results:
-                # Convert the processed results to a list of strings
-                formatted_results = []
-                for result in processed_results:
-                    if 'class' in result:  # Ensure keys are present
-                        formatted_result = f"Object: {result['class']} Count: {result['count']}"
-                        formatted_results.append(formatted_result)
-                    else:
-                        logger.error("Invalid format of processed results.")
-                        return  # Exit function if the format is invalid
-
-                # Join the formatted results into a single string
-                processed_results_message = "Prediction results:\n" + "\n".join(formatted_results)
-
-                # Send the message to the Telegram end-user using the obtained chat ID
-                return processed_results_message
-            else:
-                logger.error("Error processing prediction results.")
-        except Exception as e:
-            logger.error(f"Error sending prediction results to Telegram: {e}")
 
     def send_telegram_message(self, chat_id, message):
         """
@@ -410,17 +235,7 @@ class ObjectDetectionBot(Bot):
         self.apply_filter(msg, Img.segment, 'Segment')
 
     def apply_random_colors_filter(self, msg):
-        img_path = self.download_user_photo(msg)
-        img_instance = Img(img_path)
-
-        # Apply the 'random colors' filter
-        img_instance.random_colors()
-
-        processed_img_path = img_instance.save_img()
-
-        # Send the processed image to the user
-        self.send_photo(msg['chat']['id'], processed_img_path)
-        self.send_text(msg['chat']['id'], 'Random colors filter applied successfully.')
+        self.apply_filter(msg, Img.random_colors, 'random colors')
 
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
@@ -481,22 +296,51 @@ class ObjectDetectionBot(Bot):
             photo_path = self.download_user_photo(msg)
 
             # Rename the photo with timestamp
-            new_photo_path, new_file_name = self.rename_photo_with_timestamp(photo_path)
+            try:
+                detect_filters_instance = Detect_Filters(photo_path)
+                # Rename the photo with timestamp
+                new_photo_path, new_file_name = detect_filters_instance.rename_photo_with_timestamp(photo_path)
+            except Exception as e:
+                logger.error(f"Error renaming photo: {e}")
+                raise
 
             if new_photo_path and new_file_name:
-                # Upload the photo to S3
-                s3_key = self.upload_photo_to_s3(new_photo_path)
+
+                # Upload the photo to S3 and make sure the directory exists
+                try:
+                    detect_filters_instance = Detect_Filters(new_photo_path)
+                    s3_key = detect_filters_instance.upload_photo_to_s3(new_photo_path)
+                except Exception as e:
+                    logger.error(f"Error uploading photo to S3: {e}")
+                    return None
 
                 # Obtain the chat ID from the incoming message
                 chat_id = msg['chat']['id']
 
                 if s3_key:
                     # Call the YOLOv5 service
+                    json_file_path = self.call_yolo_service(new_photo_path, chat_id)
 
-                    processed_results = self.call_yolo_service(new_photo_path, chat_id)
+                    # Processes the json results file
+                    try:
+                        detect_filters_instance = Detect_Filters(json_file_path)
+                        processed_results = detect_filters_instance.process_prediction_results(json_file_path)
+                    except FileNotFoundError as e:
+                        logger.error(f"Error: Prediction results file not found: {e}")
+                        return None
+                    except KeyError as e:
+                        logger.error(f"Error parsing prediction results: {e}")
+                        return None
+
+                    # Add variable in case it fails to generate it
+                    processed_results_message = ""
 
                     # Send the prediction results to Telegram user
-                    processed_results_message = self.send_prediction_results_to_telegram(processed_results)
+                    try:
+                        detect_filters_instance = Detect_Filters(processed_results)
+                        processed_results_message = detect_filters_instance.send_prediction_results_to_telegram(processed_results)
+                    except Exception as e:
+                        logger.error(f"Error sending prediction results to Telegram: {e}")
 
                     # Check if the processed results message exist
                     if processed_results_message:

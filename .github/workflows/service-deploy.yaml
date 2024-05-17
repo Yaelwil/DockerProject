@@ -51,7 +51,7 @@ jobs:
           docker build -t $YOLOV5_IMAGE_NAME .
           docker push $YOLOV5_IMAGE_NAME
 
-  ReplicainitializerBuild:
+  ReplicaInitializerBuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
@@ -77,7 +77,7 @@ jobs:
     needs:
       - PolybotBuild
       - Yolo5Build
-      - ReplicainitializerBuild
+      - ReplicaInitializerBuild
 
     steps:
       - name: Checkout the repo code
