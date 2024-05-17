@@ -13,7 +13,7 @@ import json
 from img_proc import Img
 from responses import load_responses
 from detect_filters import Detect_Filters
-from filters import Filters
+#from filters import Filters
 
 BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
 
