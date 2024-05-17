@@ -51,12 +51,33 @@ jobs:
           docker build -t $YOLOV5_IMAGE_NAME .
           docker push $YOLOV5_IMAGE_NAME
 
+  ReplicainitializerBuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Build and push image
+        run: |
+          cd ubuntu_docker
+          
+          # export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          # export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 352708296901.dkr.ecr.eu-central-1.amazonaws.com
+               
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+
+          REPLICA_INITIALIZER_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/replica_initializer:${{ github.run_number }}
+          docker build -t $REPLICA_INITIALIZER_IMAGE_NAME .
+          docker push $REPLICA_INITIALIZER_IMAGE_NAME
+
   Deploy:
     name: Deploy Docker compose project
     runs-on: ubuntu-latest
     needs:
       - PolybotBuild
       - Yolo5Build
+      - ReplicainitializerBuild
 
     steps:
       - name: Checkout the repo code
@@ -98,7 +119,7 @@ jobs:
             mongodb_image=mongo:4.4.0
             yolo5_image=yaeli1/yolov5:${{ github.run_number }}
             polybot_image=yaeli1/polybot:${{ github.run_number }}
-            ubuntu_docker=yaeli1/ubuntu_docker:0.0.1
+            ubuntu_docker=yaeli1/replica_initializer:${{ github.run_number }}
             
             # container names
             mongo_primary_container_name=mongodb_primary
