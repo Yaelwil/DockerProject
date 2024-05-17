@@ -96,8 +96,8 @@ jobs:
             
             # Base image
             mongodb_image=mongo:4.4.0
-            yolo5_image=yaeli1/yolov5:0.0.1
-            polybot_image=yaeli1/polybot:0.0.1
+            yolo5_image=$YOLOV5_IMAGE_NAME
+            polybot_image=$POLYBOT_IMAGE_NAME
             ubuntu_docker=yaeli1/ubuntu_docker:0.0.1
             
             # container names
