@@ -27,9 +27,9 @@ jobs:
           # Login to DockerHub (comment out if you don't use DockerHub):         
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
 
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/polybot:${{ github.run_number }}
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          POLYBOT_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/polybot:${{ github.run_number }}
+          docker build -t $POLYBOT_IMAGE_NAME .
+          docker push $POLYBOT_IMAGE_NAME
 
   Yolo5Build:
     runs-on: ubuntu-latest
@@ -47,9 +47,9 @@ jobs:
                
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
 
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/yolo5:${{ github.run_number }}
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          YOLOV5_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/yolo5:${{ github.run_number }}
+          docker build -t $YOLOV5_IMAGE_NAME .
+          docker push $YOLOV5_IMAGE_NAME
 
   Deploy:
     name: Deploy Docker compose project
@@ -96,8 +96,8 @@ jobs:
             
             # Base image
             mongodb_image=mongo:4.4.0
-            yolo5_image=yaeli1/yolov5:0.0.1
-            polybot_image=yaeli1/polybot:0.0.1
+            yolo5_image=YOLOV5_IMAGE_NAME
+            polybot_image=$POLYBOT_IMAGE_NAME
             ubuntu_docker=yaeli1/ubuntu_docker:0.0.1
             
             # container names
@@ -109,13 +109,13 @@ jobs:
             ubuntu_container_name=ubuntu_docker
             
             # networks names
-            mongodb_replica_set=mongodb_replica_set}
+            mongodb_replica_set=mongodb_replica_set
             mongodb_primary_to_yolo=mongodb_primary_to_yolo
             yolo_to_polybot=yolo_to_polybot
             driver=bridge
             
             # AWS variables
-            BUCKET_NAME=yaelwil-dockerproject
+            BUCKET_NAME=${{ secrets.BUCKET_NAME }}
             TELEGRAM_TOKEN = ${{ secrets.TELEGRAM_BOT_TOKEN }}
             TELEGRAM_AUTOTOKEN = ${{ secrets.TELEGRAM_AUTOTOKEN }}
             """ > .env
