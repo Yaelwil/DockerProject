@@ -109,8 +109,7 @@ jobs:
             ubuntu_container_name=ubuntu_docker
             
             # networks names
-            mongodb_primary_to_secondary_1=mongodb_primary_to_secondary_1
-            mongodb_primary_to_secondary_2=mongodb_primary_to_secondary_2
+            mongodb_replica_set=mongodb_replica_set}
             mongodb_primary_to_yolo=mongodb_primary_to_yolo
             yolo_to_polybot=yolo_to_polybot
             driver=bridge
