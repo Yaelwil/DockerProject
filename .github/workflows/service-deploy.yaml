@@ -47,7 +47,7 @@ jobs:
                
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
 
-          YOLOV5_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/yolo5:${{ github.run_number }}
+          YOLOV5_IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/yolov5:${{ github.run_number }}
           docker build -t $YOLOV5_IMAGE_NAME .
           docker push $YOLOV5_IMAGE_NAME
 
@@ -96,7 +96,7 @@ jobs:
             
             # Base image
             mongodb_image=mongo:4.4.0
-            yolo5_image=YOLOV5_IMAGE_NAME
+            yolo5_image=$YOLOV5_IMAGE_NAME
             polybot_image=$POLYBOT_IMAGE_NAME
             ubuntu_docker=yaeli1/ubuntu_docker:0.0.1
             
