@@ -10,6 +10,7 @@ import json
 from img_proc import Img
 from responses import load_responses
 from detect_filters import Detect_Filters
+from filters import Filters
 
 BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
 
@@ -204,35 +205,6 @@ class ObjectDetectionBot(Bot):
         except Exception as e:
             logger.error(f"Error sending message to Telegram: {e}")
 
-    def apply_filter(self, msg, filter_func, filter_name):
-        # Download the photo and apply the specified filter
-        img_path = self.download_user_photo(msg)
-        img_instance = Img(img_path)
-        filter_func(img_instance)  # Call the provided filter function
-        processed_img_path = img_instance.save_img()
-
-        # Send the processed image to the user
-        self.send_photo(msg['chat']['id'], processed_img_path)
-        self.send_text(msg['chat']['id'], f'{filter_name} filter applied successfully.')
-
-    def apply_blur_filter(self, msg):
-        self.apply_filter(msg, Img.blur, 'Blur')
-
-    def apply_contour_filter(self, msg):
-        self.apply_filter(msg, Img.contour, 'Contour')
-
-    def apply_rotate_filter(self, msg):
-        self.apply_filter(msg, Img.rotate, 'Rotate')
-
-    def apply_salt_n_pepper_filter(self, msg):
-        self.apply_filter(msg, Img.salt_n_pepper, 'Salt and Pepper')
-
-    def apply_segment_filter(self, msg):
-        self.apply_filter(msg, Img.segment, 'Segment')
-
-    def apply_random_colors_filter(self, msg):
-        self.apply_filter(msg, Img.random_colors, 'random colors')
-
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
 
@@ -249,7 +221,14 @@ class ObjectDetectionBot(Bot):
                             'salt and pepper' in photo_caption or
                             'segment' in photo_caption or
                             'random color' in photo_caption):
-                        self.image_processing(msg)
+                        # Download the photo
+                        img_path = self.download_user_photo(msg)
+                        # create instance variables
+                        filters_instance = Filters(photo_caption, img_path)
+                        processed_img_path, filter_name = filters_instance.image_processing()
+                        # Send the processed image to the user
+                        self.send_photo(msg['chat']['id'], processed_img_path)
+                        self.send_text(msg['chat']['id'], f'{filter_name} filter applied successfully.')
                     elif 'predict' in photo_caption:
                         self.object_detection(msg)
                     else:
@@ -268,24 +247,6 @@ class ObjectDetectionBot(Bot):
                 # If the message doesn't contain a photo with a caption, handle it as a regular text message
         else:
             super().handle_message(msg)
-
-    def image_processing(self, msg):
-        photo_caption = msg['caption'].lower()
-
-        if 'blur' in photo_caption:
-            self.apply_blur_filter(msg)
-        elif 'contour' in photo_caption:
-            self.apply_contour_filter(msg)
-        elif 'rotate' in photo_caption:
-            self.apply_rotate_filter(msg)
-        elif 'salt and pepper' in photo_caption:
-            self.apply_salt_n_pepper_filter(msg)
-        elif 'segment' in photo_caption:
-            self.apply_segment_filter(msg)
-        elif 'random color' in photo_caption:
-            self.apply_random_colors_filter(msg)
-        else:
-            pass
 
     def object_detection(self, msg):
         if self.is_current_msg_photo(msg):

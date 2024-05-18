@@ -2,7 +2,10 @@ from datetime import datetime
 import os
 import boto3
 import json
+import requests
+from loguru import logger
 
+BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
 
 class Detect_Filters:
 

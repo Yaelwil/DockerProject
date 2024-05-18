@@ -44,14 +44,14 @@ def predict():
         logger.error("Missing 'imgName' parameter in the request")
         return jsonify({"error": "Missing 'imgName' parameter"}), 400
 
+    # Download the original pic from S3
+
     # Create an S3 client
     s3 = boto3.client('s3')
-
     # Define the local filename to save the downloaded file
     file_name = img_name.split('/')[-1]
     # Expand the $HOME variable to the user's home directory
     home_dir = os.path.expanduser('~')
-
     # Define the full path to the file
     original_img_path = os.path.join(home_dir, file_name)
     # Download the file
