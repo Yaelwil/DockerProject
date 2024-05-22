@@ -2,10 +2,9 @@ from datetime import datetime
 import os
 import boto3
 import json
-import requests
-from loguru import logger
 
-BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
+images_bucket = os.environ['BUCKET_NAME']
+
 
 class Detect_Filters:
 
@@ -88,9 +87,9 @@ class Detect_Filters:
         s3_json_folder = 'json'
 
         # Ensure the directory exists in the S3 bucket
-        self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_directory_path)
-        self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_predicted_directory_path)
-        self.ensure_s3_directory_exists('yaelwil-dockerproject', s3_json_folder)
+        self.ensure_s3_directory_exists(images_bucket, s3_directory_path)
+        self.ensure_s3_directory_exists(images_bucket, s3_predicted_directory_path)
+        self.ensure_s3_directory_exists(images_bucket, s3_json_folder)
 
         # Extract filename from the path
         filename = os.path.basename(photo_path)
@@ -99,7 +98,7 @@ class Detect_Filters:
         s3_key = s3_directory_path + '/' + filename
 
         # Upload the photo to S3
-        self.s3.upload_file(photo_path, 'yaelwil-dockerproject', s3_key)
+        self.s3.upload_file(photo_path, images_bucket, s3_key)
 
         # Return the S3 key
         return s3_key

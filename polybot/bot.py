@@ -13,6 +13,7 @@ from detect_filters import Detect_Filters
 from filters import Filters
 
 BOT_TOKEN = os.environ['TELEGRAM_TOKEN']
+yolo_container_name = os.environ['yolo_container_name']
 
 
 
@@ -145,7 +146,7 @@ class ObjectDetectionBot(Bot):
 
         try:
             # Specify the URL of the YOLOv5 service for prediction
-            yolo5_base_url = "http://yolo_app:8081/predict"
+            yolo5_base_url = f"http://{yolo_container_name}:8081/predict"
 
             # URL for prediction with the new_photo_path parameter
             yolo5_url = f"{yolo5_base_url}?imgName={new_photo_path}"

@@ -12,6 +12,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 images_bucket = os.environ['BUCKET_NAME']
+primary_mongo_name = os.environ['mongo_primary_container_name']
 
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
@@ -141,7 +142,7 @@ def predict():
 
         try:
             logger.info("Connecting to MongoDB...")
-            connection_string = "mongodb://mongodb_primary:27017/"
+            connection_string = f"mongodb://{primary_mongo_name}:27017/"
             logger.info(f"Connection string: {connection_string}")
 
             client = MongoClient(connection_string)
