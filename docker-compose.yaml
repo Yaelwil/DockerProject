@@ -36,9 +36,9 @@ services:
     command: mongod --replSet myReplicaSet --bind_ip_all
 
 
-  script-runner:
-    image: ${ubuntu_docker}
-    container_name: ${ubuntu_container_name}
+  replica_initializer:
+    image: ${replica_initializer_image}
+    container_name: ${replica_initializer_name}
     depends_on:
       - mongodb_primary
       - mongodb_secondary_1
