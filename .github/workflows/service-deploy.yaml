@@ -119,7 +119,7 @@ jobs:
             mongodb_image=mongo:4.4.0
             yolo5_image=yaeli1/yolov5:${{ github.run_number }}
             polybot_image=yaeli1/polybot:${{ github.run_number }}
-            ubuntu_docker=yaeli1/replica_initializer:${{ github.run_number }}
+            replica_initializer_image=yaeli1/replica_initializer:${{ github.run_number }}
             
             # container names
             mongo_primary_container_name=mongodb_primary
