@@ -127,7 +127,7 @@ jobs:
             mongo_secondary_2_container_name=mongodb_secondary_2
             yolo_container_name=yolo_app
             polybot_container_name=polybot_app
-            ubuntu_container_name=ubuntu_docker
+            replica_initializer_name=replica_initializer
             
             # networks names
             mongodb_replica_set=mongodb_replica_set
