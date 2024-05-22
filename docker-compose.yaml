@@ -71,7 +71,7 @@ services:
     image: ${polybot_image}
     container_name: polybot_app
     depends_on:
-      - script-runner
+      - replica_initializer
     networks:
       - yolo_to_polybot
     volumes:
