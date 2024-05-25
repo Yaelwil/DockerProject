@@ -45,8 +45,6 @@ services:
       - mongodb_secondary_2
     networks:
       - mongodb_replica_set
-    env_file:
-      - .env
 
   yolo5_app:
     image: ${yolo5_image}
