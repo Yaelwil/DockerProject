@@ -117,9 +117,9 @@ jobs:
             
             # Base image
             mongodb_image=mongo:4.4.0
-            yolo5_image=$POLYBOT_IMAGE_NAME
-            polybot_image=$YOLOV5_IMAGE_NAME
-            replica_initializer_image=$REPLICA_INITIALIZER_IMAGE_NAME
+            yolo5_image=${POLYBOT_IMAGE_NAME}
+            polybot_image=$pYOLOV5_IMAGE_NAME}
+            replica_initializer_image=${REPLICA_INITIALIZER_IMAGE_NAME}
             
             # container names
             mongo_primary_container_name=mongodb_primary
@@ -138,7 +138,6 @@ jobs:
             # AWS variables
             BUCKET_NAME=${{ secrets.BUCKET_NAME }}
             TELEGRAM_TOKEN = ${{ secrets.TELEGRAM_BOT_TOKEN }}
-            TELEGRAM_AUTOTOKEN = ${{ secrets.TELEGRAM_AUTOTOKEN }}
             """ > .env
             
             # Take the service down
