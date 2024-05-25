@@ -118,7 +118,7 @@ jobs:
             # Base image
             mongodb_image=mongo:4.4.0
             yolo5_image=${POLYBOT_IMAGE_NAME}
-            polybot_image=$pYOLOV5_IMAGE_NAME}
+            polybot_image=${YOLOV5_IMAGE_NAME}
             replica_initializer_image=${REPLICA_INITIALIZER_IMAGE_NAME}
             
             # container names
