@@ -37,7 +37,7 @@ services:
 
 
   replica_initializer:
-    image: ${REPLICA_INITIALIZER_IMAGE_NAME}
+    image: ${replica_initializer_image}
     container_name: ${replica_initializer_name}
     depends_on:
       - mongodb_primary
