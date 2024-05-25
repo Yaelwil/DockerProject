@@ -114,7 +114,8 @@ jobs:
             
             # Generate .env file
             echo """
-            TELEGRAM_APP_URL=https://alpaca-star-early.ngrok-free.app
+            ${{ secrets.TELEGRAM_APP_URL }}
+            TELEGRAM_APP_URL=${{ secrets.TELEGRAM_APP_URL }}
             
             # Base image
             mongodb_image=mongo:4.4.0

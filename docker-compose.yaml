@@ -58,8 +58,6 @@ services:
     networks:
       - mongodb_primary_to_yolo
       - yolo_to_polybot
-    volumes:
-      - ~/.aws/credentials:/root/.aws/credentials:ro
     environment:
       - MONGO_HOST=mongodb_primary
       - MONGO_PORT=27017
@@ -74,8 +72,6 @@ services:
       - replica_initializer
     networks:
       - yolo_to_polybot
-    volumes:
-      - ~/.aws/credentials:/root/.aws/credentials:ro
     ports:
       - "8443:8443"
     env_file:
