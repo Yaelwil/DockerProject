@@ -37,7 +37,7 @@ services:
 
 
   replica_initializer:
-    image: ${replica_initializer_image}
+    image: ${REPLICA_INITIALIZER_IMAGE_NAME}
     container_name: ${replica_initializer_name}
     depends_on:
       - mongodb_primary
@@ -47,7 +47,6 @@ services:
       - mongodb_replica_set
     env_file:
       - .env
-
 
   yolo5_app:
     image: ${yolo5_image}
