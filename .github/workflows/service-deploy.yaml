@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  EC2_PUBLIC_IP: 52.31.252.170 # TODO replace to your EC2 instance public IP
+  EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }} # TODO replace to your EC2 instance public IP
 
 jobs:
   PolybotBuild:
@@ -99,7 +99,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            # You deployment script here...
+            # You deployment script here.
             
             sudo apt update && sudo apt install jq -y
             
@@ -113,13 +113,13 @@ jobs:
             
             # Generate .env file
             echo """
-            TELEGRAM_APP_URL=https://alpaca-star-early.ngrok-free.app
+            TELEGRAM_APP_URL=${{ secrets.TELEGRAM_APP_URL }}
             
             # Base image
             mongodb_image=mongo:4.4.0
-            yolo5_image=yaeli1/yolov5:${{ github.run_number }}
-            polybot_image=yaeli1/polybot:${{ github.run_number }}
-            replica_initializer_image=yaeli1/replica_initializer:${{ github.run_number }}
+            yolo5_image=$POLYBOT_IMAGE_NAME
+            polybot_image=$YOLOV5_IMAGE_NAME
+            replica_initializer_image=$REPLICA_INITIALIZER_IMAGE_NAME
             
             # container names
             mongo_primary_container_name=mongodb_primary
