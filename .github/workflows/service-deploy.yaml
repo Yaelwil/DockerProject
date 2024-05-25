@@ -114,7 +114,6 @@ jobs:
             
             # Generate .env file
             echo """
-            ${{ secrets.TELEGRAM_APP_URL }}
             TELEGRAM_APP_URL=${{ secrets.TELEGRAM_APP_URL }}
             
             # Base image
