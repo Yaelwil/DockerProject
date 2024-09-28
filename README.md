@@ -29,7 +29,7 @@ Files Worked On:
 - responses.py: Imports response data into the project.
 - requirements.txt: Specifies project dependencies.
 
-# YOLOv5 Container
+## YOLOv5 Container
 
 Finally, I deployed a YOLOv5 container to enable object detection. The prediction code sourced from a GitHub repository
 
